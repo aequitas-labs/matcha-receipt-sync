@@ -1,0 +1,89 @@
+{
+  "manifest_version": 3,
+  "name": "matcha money receipt sync",
+  "version": "0.7.0",
+  "description": "Sync receipts from Amazon, Costco, Walmart, and Target to matcha money.",
+  "permissions": ["storage", "alarms", "cookies", "scripting", "tabs"],
+  "host_permissions": [
+    "https://www.amazon.com/*",
+    "https://www.costco.com/*",
+    "https://ecom-api.costco.com/*",
+    "https://www.walmart.com/*",
+    "https://www.target.com/*",
+    "https://api.target.com/*",
+    "https://matcha.money/*"
+  ],
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.com/your-orders*",
+        "https://www.amazon.com/gp/your-account/order-history*",
+        "https://www.amazon.com/gp/css/order-history*"
+      ],
+      "js": ["content-amazon.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.costco.com/OrderStatusCmd*",
+        "https://www.costco.com/myaccount/*"
+      ],
+      "js": ["content-costco-main.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.costco.com/OrderStatusCmd*",
+        "https://www.costco.com/myaccount/*"
+      ],
+      "js": ["content-costco.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.walmart.com/orders*",
+        "https://www.walmart.com/account/orders*"
+      ],
+      "js": ["content-walmart-main.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.walmart.com/orders*",
+        "https://www.walmart.com/account/orders*"
+      ],
+      "js": ["content-walmart.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.target.com/orders*",
+        "https://www.target.com/account/orders*"
+      ],
+      "js": ["content-target-main.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.target.com/orders*",
+        "https://www.target.com/account/orders*"
+      ],
+      "js": ["content-target.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": "icons/icon-128.png"
+  }
+}

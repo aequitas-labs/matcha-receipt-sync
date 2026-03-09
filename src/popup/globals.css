@@ -1,0 +1,171 @@
+@import 'tailwindcss';
+
+/* Enable class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================
+   MATCHA MONEY DESIGN SYSTEM
+   Subset for Chrome Extension Popup
+   ============================================ */
+
+:root {
+  /* Brand Colors */
+  --ceremonial-green: #88b04b;
+  --deep-steep: #2f3e2e;
+  --oat-milk: #f3f1e8;
+  --whisk-wood: #e0c097;
+  --alert-coral: #e57373;
+
+  /* Light Theme Semantic Colors */
+  --background: #f3f1e8;
+  --foreground: #2f3e2e;
+  --card: #ffffff;
+  --card-foreground: #2f3e2e;
+  --primary: #88b04b;
+  --primary-foreground: #ffffff;
+  --secondary: #e0c097;
+  --secondary-foreground: #2f3e2e;
+  --muted: #f5f3ec;
+  --muted-foreground: #52525b;
+  --destructive: #e57373;
+  --destructive-foreground: #ffffff;
+  --border: #e5e2d9;
+  --input: #e5e2d9;
+  --ring: #88b04b;
+
+  /* Status Colors */
+  --success: #88b04b;
+  --success-foreground: #ffffff;
+  --warning: #ffb74d;
+  --warning-foreground: #2f3e2e;
+  --info: #4db6ac;
+  --info-foreground: #ffffff;
+
+  /* Semantic Background Opacity Variants */
+  --success-bg: color-mix(in srgb, var(--success) 12%, transparent);
+  --destructive-bg: color-mix(in srgb, var(--destructive) 12%, transparent);
+  --warning-bg: color-mix(in srgb, var(--warning) 12%, transparent);
+  --info-bg: color-mix(in srgb, var(--info) 12%, transparent);
+  --primary-bg: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.dark {
+  --background: #2f3e2e;
+  --foreground: #f3f1e8;
+  --card: #3d4f3c;
+  --card-foreground: #f3f1e8;
+  --primary: #88b04b;
+  --primary-foreground: #ffffff;
+  --secondary: #5a6f59;
+  --secondary-foreground: #f3f1e8;
+  --muted: #2d3d2c;
+  --muted-foreground: #9ca3af;
+  --destructive: #e57373;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.05);
+  --input: rgba(255, 255, 255, 0.05);
+  --ring: #88b04b;
+
+  --success: #88b04b;
+  --success-foreground: #ffffff;
+  --warning: #ffb74d;
+  --warning-foreground: #2f3e2e;
+  --info: #4db6ac;
+  --info-foreground: #ffffff;
+
+  --success-bg: color-mix(in srgb, var(--success) 15%, transparent);
+  --destructive-bg: color-mix(in srgb, var(--destructive) 15%, transparent);
+  --warning-bg: color-mix(in srgb, var(--warning) 15%, transparent);
+  --info-bg: color-mix(in srgb, var(--info) 15%, transparent);
+  --primary-bg: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-ceremonial-green: var(--ceremonial-green);
+  --color-deep-steep: var(--deep-steep);
+  --color-oat-milk: var(--oat-milk);
+  --color-whisk-wood: var(--whisk-wood);
+  --color-alert-coral: var(--alert-coral);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --color-success-bg: var(--success-bg);
+  --color-destructive-bg: var(--destructive-bg);
+  --color-warning-bg: var(--warning-bg);
+  --color-info-bg: var(--info-bg);
+  --color-primary-bg: var(--primary-bg);
+
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+body {
+  min-width: 360px;
+  max-width: 100%;
+  min-height: 200px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono), 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans), 'Geist', sans-serif;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Spin animation for sync icons */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
