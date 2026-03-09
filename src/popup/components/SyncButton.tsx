@@ -4,10 +4,17 @@ import { RefreshCw } from './ui/Icons';
 
 interface Props {
   loading: boolean;
+  activeCount?: number;
   onClick: () => void;
 }
 
-export function SyncButton({ loading, onClick }: Props) {
+export function SyncButton({ loading, activeCount, onClick }: Props) {
+  const label = loading
+    ? activeCount && activeCount > 1
+      ? `Syncing (${activeCount})...`
+      : 'Syncing...'
+    : 'Sync All';
+
   return (
     <Button
       variant="primary"
@@ -16,7 +23,7 @@ export function SyncButton({ loading, onClick }: Props) {
       onClick={onClick}
     >
       {!loading && <RefreshCw size={14} />}
-      {loading ? 'Syncing All...' : 'Sync All'}
+      {label}
     </Button>
   );
 }

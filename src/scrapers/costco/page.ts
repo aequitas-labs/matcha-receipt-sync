@@ -4,6 +4,8 @@
  * world content script via window.postMessage.
  */
 
+import { mapCostcoItems } from './parser';
+
 const GRAPHQL_URL =
   'https://ecom-api.costco.com/ebusiness/order/v1/orders/graphql';
 const CLIENT_IDENTIFIER = '481b1aec-aa3b-454b-b81b-48187e28f205';
@@ -61,11 +63,31 @@ interface FetchRequest {
   endDate: string;
 }
 
+/** Find the freshest MSAL id token from localStorage */
+function findMsalIdToken(): string | null {
+  let bestToken: string | null = null;
+  let bestExp = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key?.includes('-idtoken-')) continue;
+    try {
+      const entry = JSON.parse(localStorage.getItem(key) ?? '');
+      if (entry.credentialType === 'IdToken' && entry.secret) {
+        const payload = JSON.parse(atob(entry.secret.split('.')[1]));
+        if (payload.exp > bestExp) { bestExp = payload.exp; bestToken = entry.secret; }
+      }
+    } catch { /* skip */ }
+  }
+  return bestToken;
+}
+
 /** Read auth info directly from localStorage (MAIN world has access) */
 function getFreshTokens(): { clientId: string; idToken: string } | null {
   const clientId = localStorage.getItem('clientID');
-  const idToken = localStorage.getItem('idToken');
-  if (!clientId || !idToken) return null;
+  if (!clientId) return null;
+
+  const idToken = findMsalIdToken() ?? localStorage.getItem('idToken');
+  if (!idToken) return null;
 
   try {
     const payload = JSON.parse(atob(idToken.split('.')[1]));
@@ -181,19 +203,7 @@ window.addEventListener('message', async (event) => {
             subTotal: detail.subTotal,
             taxes: detail.taxes,
             warehouseName: detail.warehouseName,
-            items: (detail.itemArray ?? []).map(
-              (item: {
-                itemDescription01: string;
-                unit: number;
-                amount: number;
-                itemUnitPriceAmount: number;
-              }) => ({
-                name: item.itemDescription01,
-                quantity: item.unit || 1,
-                unitPrice: item.itemUnitPriceAmount || item.amount,
-                totalPrice: item.amount,
-              })
-            ),
+            items: mapCostcoItems(detail.itemArray ?? []),
           });
         }
       } catch (err) {
@@ -217,6 +227,17 @@ window.addEventListener('message', async (event) => {
   }
 });
 
-// Signal ready
-window.postMessage({ type: 'MATCHA_COSTCO_READY' }, '*');
+// Signal ready after page load + a brief delay to allow MSAL to write tokens to localStorage
+function signalReady() {
+  setTimeout(() => {
+    window.postMessage({ type: 'MATCHA_COSTCO_READY' }, '*');
+    console.log('[matcha] Costco MAIN world script ready');
+  }, 2_000);
+}
+
+if (document.readyState === 'complete') {
+  signalReady();
+} else {
+  window.addEventListener('load', signalReady);
+}
 console.log('[matcha] Costco MAIN world script loaded');

@@ -4,18 +4,29 @@ import type { RetailerSyncStatus } from '../types/messages';
 import { CursorStore } from './cursor-store';
 import { createApiClient } from '../api/client';
 import { formatDate } from '../utils/date';
-import { saveReceipts } from '../storage/receipts';
+import { saveReceipts, getReceiptsByRetailer } from '../storage/receipts';
 
 export class SyncOrchestrator {
   private cursorStore = new CursorStore();
 
   constructor(private registry: ScraperRegistry) {}
 
+  /** Mark a retailer as currently syncing (visible in popup) */
+  private async setSyncing(retailerId: string, syncing: boolean): Promise<void> {
+    const { syncingRetailers = [] } = await chrome.storage.local.get('syncingRetailers');
+    const set = new Set<string>(syncingRetailers);
+    if (syncing) set.add(retailerId);
+    else set.delete(retailerId);
+    await chrome.storage.local.set({ syncingRetailers: [...set] });
+  }
+
   /** Handle receipts scraped by a content script (DOM-based scrapers) */
   async handleScrapedReceipts(
     retailerId: string,
     receipts: ScrapedReceipt[]
   ): Promise<void> {
+    await this.setSyncing(retailerId, true);
+
     // Ensure orderDate is a Date (may arrive as string from message passing)
     for (const r of receipts) {
       if (!(r.orderDate instanceof Date)) {
@@ -23,7 +34,15 @@ export class SyncOrchestrator {
       }
     }
 
-    if (receipts.length === 0) return;
+    if (receipts.length === 0) {
+      // Still advance cursor to now so "Last sync" reflects this run
+      await this.cursorStore.set(retailerId, {
+        lastSyncedAt: new Date().toISOString(),
+      });
+      await this.updateStatus(retailerId, 0, []);
+      await this.setSyncing(retailerId, false);
+      return;
+    }
 
     // Persist locally before pushing to API
     await saveReceipts(receipts);
@@ -32,26 +51,21 @@ export class SyncOrchestrator {
     let pushed = 0;
     const errors: string[] = [];
 
-    for (const receipt of receipts) {
-      try {
-        const itemSummary = receipt.items.map((i) => i.name).join(', ');
-        await api.createTransaction({
-          name: `${receipt.retailer} Order #${receipt.orderId}`,
-          amount: -receipt.totalAmount,
-          date: formatDate(receipt.orderDate),
-          notes: itemSummary ? `Items: ${itemSummary}` : undefined,
-          metadata: {
-            retailer: receipt.retailer,
-            orderId: receipt.orderId,
-            orderUrl: receipt.orderUrl,
-            tax: receipt.tax,
-            items: receipt.items,
-          },
-        });
-        pushed++;
-      } catch (err) {
-        errors.push(`${receipt.orderId}: ${err}`);
-      }
+    try {
+      const result = await api.batchUpsertReceipts({
+        receipts: receipts.map((r) => ({
+          retailer: r.retailer,
+          orderId: r.orderId,
+          orderDate: formatDate(r.orderDate),
+          totalAmount: r.totalAmount,
+          tax: r.tax,
+          orderUrl: r.orderUrl,
+          items: r.items,
+        })),
+      });
+      pushed = result.created + result.updated;
+    } catch (err) {
+      errors.push(`Batch upsert failed: ${err}`);
     }
 
     // Advance cursor to most recent order
@@ -67,6 +81,7 @@ export class SyncOrchestrator {
       await this.recordMatchaSync();
     }
     await this.updateStatus(retailerId, pushed, errors);
+    await this.setSyncing(retailerId, false);
   }
 
   /** Get the effective sync-from date (user setting) */
@@ -158,14 +173,16 @@ export class SyncOrchestrator {
 
   private async updateStatus(
     retailerId: string,
-    pushed: number,
+    _pushed: number,
     errors: string[]
   ): Promise<void> {
     const { syncStatus = {} } = await chrome.storage.local.get(['syncStatus']);
     const existing = syncStatus[retailerId] ?? this.defaultStatus(retailerId);
 
+    // Count actual stored receipts (not cumulative API pushes)
+    const storedReceipts = await getReceiptsByRetailer(retailerId);
     existing.lastSyncedAt = new Date().toISOString();
-    existing.transactionCount += pushed;
+    existing.transactionCount = storedReceipts.length;
     existing.lastError = errors.length > 0 ? errors.join('; ') : null;
 
     syncStatus[retailerId] = existing;

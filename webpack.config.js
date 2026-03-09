@@ -8,13 +8,14 @@ const config = {
 
   entry: {
     'service-worker': './src/background/service-worker.ts',
-    'content-amazon': './src/scrapers/amazon/content.ts',
-    'content-costco': './src/scrapers/costco/content.ts',
-    'content-costco-main': './src/scrapers/costco/content-main.ts',
-    'content-walmart': './src/scrapers/walmart/content.ts',
-    'content-walmart-main': './src/scrapers/walmart/content-main.ts',
-    'content-target': './src/scrapers/target/content.ts',
-    'content-target-main': './src/scrapers/target/content-main.ts',
+    'content-amazon': './src/scrapers/amazon/bridge.ts',
+    'content-amazon-main': './src/scrapers/amazon/page.ts',
+    'content-costco': './src/scrapers/costco/bridge.ts',
+    'content-costco-main': './src/scrapers/costco/page.ts',
+    'content-walmart': './src/scrapers/walmart/bridge.ts',
+    'content-walmart-main': './src/scrapers/walmart/page.ts',
+    'content-target': './src/scrapers/target/bridge.ts',
+    'content-target-main': './src/scrapers/target/page.ts',
     popup: './src/popup/popup.tsx',
   },
 

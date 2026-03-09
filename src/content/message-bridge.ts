@@ -1,4 +1,4 @@
-import type { ExtensionMessage, InvoiceRef } from '../types/messages';
+import type { ExtensionMessage, SyncProgress } from '../types/messages';
 import type { ScrapedReceipt, SyncCursor } from '../types/scraper';
 
 export class MessageBridge {
@@ -18,42 +18,24 @@ export class MessageBridge {
     } satisfies ExtensionMessage);
   }
 
-  sendInvoiceUrls(retailerId: string, invoices: InvoiceRef[]): void {
+  sendSyncProgress(retailerId: string, progress: SyncProgress): void {
     chrome.runtime.sendMessage({
-      type: 'INVOICE_URLS',
+      type: 'SYNC_PROGRESS',
       retailerId,
-      invoices,
+      progress,
     } satisfies ExtensionMessage);
-  }
-
-  sendCostcoTokens(clientId: string, idToken: string): void {
-    chrome.runtime.sendMessage({
-      type: 'COSTCO_AUTH_TOKENS',
-      clientId,
-      idToken,
-    } satisfies ExtensionMessage);
-  }
-
-  async fetchPaginatedInvoices(
-    retailerId: string,
-    nextUrl: string,
-    cursorDate?: string
-  ): Promise<InvoiceRef[]> {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage(
-        {
-          type: 'FETCH_PAGINATED_INVOICES',
-          retailerId,
-          nextUrl,
-          cursorDate,
-        } satisfies ExtensionMessage,
-        (response: InvoiceRef[]) => resolve(response ?? [])
-      );
-    });
   }
 
   async getCursor(retailerId: string): Promise<SyncCursor | undefined> {
     const { cursors = {} } = await chrome.storage.local.get(['cursors']);
     return cursors[retailerId];
+  }
+
+  /** Returns the effective start date for a scrape: max(syncFromDate, cursor.lastSyncedAt) */
+  async getSyncFromDate(retailerId: string): Promise<string | undefined> {
+    const { syncFromDate, cursors = {} } = await chrome.storage.local.get(['syncFromDate', 'cursors']);
+    const cursor: string | undefined = (cursors[retailerId] as SyncCursor | undefined)?.lastSyncedAt;
+    if (syncFromDate && cursor) return cursor > syncFromDate ? cursor : syncFromDate;
+    return cursor ?? syncFromDate ?? undefined;
   }
 }

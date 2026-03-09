@@ -1,5 +1,6 @@
 import { MessageBridge } from '../../content/message-bridge';
 import { showToast } from '../../content/toast';
+import { formatShortDate } from '../../utils/date';
 
 /**
  * Target ISOLATED world content script.
@@ -10,9 +11,14 @@ const bridge = new MessageBridge();
 const RETAILER_ID = 'target';
 
 async function run(): Promise<void> {
+  const { syncProgress = {} } = await chrome.storage.local.get('syncProgress');
+  if (syncProgress[RETAILER_ID]) {
+    console.log('[matcha] Target: sync already in progress, skipping');
+    return;
+  }
   showToast('Scanning Target orders...', 'info');
-  const cursor = await bridge.getCursor(RETAILER_ID);
-  const startDate = cursor?.lastSyncedAt || '2024-01-01T00:00:00Z';
+
+  const startDate = await bridge.getSyncFromDate(RETAILER_ID);
 
   const requestId = crypto.randomUUID();
 
@@ -55,6 +61,10 @@ async function run(): Promise<void> {
 
   const receipts = (result.receipts ?? []) as Array<{
     orderId: string;
+    orderUrlId?: string;
+    invoiceId?: string;
+    storeReceiptId?: string;
+    purchaseType?: string;
     orderDate: string;
     total: number;
     tax?: number;
@@ -71,26 +81,39 @@ async function run(): Promise<void> {
     `[matcha] Target: received ${receipts.length} receipts from MAIN world`
   );
 
-  const mapped = receipts.map((r) => ({
-    retailer: RETAILER_ID,
-    orderId: r.orderId,
-    orderDate: new Date(r.orderDate),
-    totalAmount: r.total,
-    tax: r.tax,
-    orderUrl: `https://www.target.com/orders/${r.orderId.split('-')[0]}`,
-    items: r.items,
-    rawData: {
-      storeName: r.storeName,
-      total: r.total,
-    },
-  }));
+  const mapped = receipts.map((r) => {
+    let orderUrl: string;
+    if (r.purchaseType === 'STORE' && r.storeReceiptId) {
+      orderUrl = `https://www.target.com/orders/stores/${r.storeReceiptId}`;
+    } else if (r.invoiceId) {
+      const baseOrderId = (r.orderUrlId || r.orderId).replace(/-/g, '');
+      orderUrl = `https://www.target.com/orders/${baseOrderId}/invoices/${r.invoiceId}`;
+    } else {
+      const baseOrderId = (r.orderUrlId || r.orderId).replace(/-/g, '');
+      orderUrl = `https://www.target.com/orders/${baseOrderId}`;
+    }
+    return {
+      retailer: RETAILER_ID,
+      orderId: r.orderId,
+      orderDate: new Date(r.orderDate),
+      totalAmount: r.total,
+      tax: r.tax,
+      orderUrl,
+      items: r.items,
+      rawData: {
+        storeName: r.storeName,
+        total: r.total,
+      },
+    };
+  });
 
   bridge.sendScrapedReceipts(RETAILER_ID, mapped);
 
   if (mapped.length > 0) {
     showToast(`Found ${mapped.length} order(s) from Target`, 'success');
   } else {
-    showToast('No new Target orders found', 'info');
+    const since = startDate ? ` since ${formatShortDate(startDate)}` : '';
+    showToast(`No new Target orders${since}`, 'info');
   }
 }
 

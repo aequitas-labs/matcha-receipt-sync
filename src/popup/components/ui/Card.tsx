@@ -4,6 +4,7 @@ interface CardProps {
   variant?: 'default' | 'raised';
   className?: string;
   children: React.ReactNode;
+  onClick?: () => void;
 }
 
 const variantClasses = {
@@ -15,9 +16,13 @@ export function Card({
   variant = 'default',
   className = '',
   children,
+  onClick,
 }: CardProps) {
   return (
-    <div className={`rounded-lg p-3 ${variantClasses[variant]} ${className}`}>
+    <div
+      className={`rounded-lg p-3 ${variantClasses[variant]} ${className}`}
+      onClick={onClick}
+    >
       {children}
     </div>
   );

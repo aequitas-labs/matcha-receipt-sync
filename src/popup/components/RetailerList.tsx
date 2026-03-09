@@ -1,20 +1,24 @@
 import React from 'react';
-import type { SyncStatusMap } from '../../types/messages';
+import type { SyncStatusMap, SyncProgress } from '../../types/messages';
 import { RETAILERS } from '../constants';
 import { RetailerCard } from './RetailerCard';
 
 interface Props {
   status: SyncStatusMap;
   syncingRetailers: Set<string>;
+  syncProgress: Record<string, SyncProgress>;
   enabledRetailers: Set<string>;
   onSyncRetailer: (retailerId: string) => void;
+  onRetailerClick?: (retailerId: string) => void;
 }
 
 export function RetailerList({
   status,
   syncingRetailers,
+  syncProgress,
   enabledRetailers,
   onSyncRetailer,
+  onRetailerClick,
 }: Props) {
   const visible = RETAILERS.filter((r) => enabledRetailers.has(r.id));
 
@@ -34,8 +38,10 @@ export function RetailerList({
               key={r.id}
               retailer={r}
               status={status[r.id]}
-              syncing={syncingRetailers.has(r.id)}
+              syncing={syncingRetailers.has(r.id) || !!syncProgress[r.id]}
+              progress={syncProgress[r.id]}
               onSync={onSyncRetailer}
+              onClick={onRetailerClick}
             />
           ))
         )}

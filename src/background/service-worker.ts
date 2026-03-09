@@ -1,56 +1,14 @@
 import { ScraperRegistry } from '../scrapers/registry';
-import { AmazonScraper } from '../scrapers/amazon';
+import { RETAILER_TAB_CONFIG } from '../scrapers/config';
 import { SyncOrchestrator } from './sync-orchestrator';
 import { AlarmManager } from './alarm-manager';
 import { getDebugLog, clearDebugLog } from '../debug/logger';
-import type { ExtensionMessage, InvoiceRef } from '../types/messages';
-import type { ScrapedReceipt } from '../types/scraper';
+import type { ExtensionMessage } from '../types/messages';
 
 const registry = new ScraperRegistry();
 const orchestrator = new SyncOrchestrator(registry);
 
 console.log('[matcha] Service worker started');
-
-// Retailer config: URL patterns for matching open tabs, the page to open if
-// no tab exists, and the content script to inject.
-const RETAILER_TAB_CONFIG: Record<
-  string,
-  { urlPatterns: string[]; orderPageUrl: string; scriptFile: string }
-> = {
-  amazon: {
-    urlPatterns: [
-      'https://www.amazon.com/your-orders*',
-      'https://www.amazon.com/gp/your-account/order-history*',
-      'https://www.amazon.com/gp/css/order-history*',
-    ],
-    orderPageUrl: 'https://www.amazon.com/gp/your-account/order-history',
-    scriptFile: 'content-amazon.js',
-  },
-  costco: {
-    urlPatterns: [
-      'https://www.costco.com/OrderStatusCmd*',
-      'https://www.costco.com/myaccount/*',
-    ],
-    orderPageUrl: 'https://www.costco.com/OrderStatusCmd',
-    scriptFile: 'content-costco.js',
-  },
-  walmart: {
-    urlPatterns: [
-      'https://www.walmart.com/orders*',
-      'https://www.walmart.com/account/orders*',
-    ],
-    orderPageUrl: 'https://www.walmart.com/orders',
-    scriptFile: 'content-walmart.js',
-  },
-  target: {
-    urlPatterns: [
-      'https://www.target.com/orders*',
-      'https://www.target.com/account/orders*',
-    ],
-    orderPageUrl: 'https://www.target.com/orders',
-    scriptFile: 'content-target.js',
-  },
-};
 
 // Track tabs we opened so we can close them after scraping
 const autoOpenedTabs = new Set<number>();
@@ -120,90 +78,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-const amazonScraper = new AmazonScraper();
-
-/** Fetch each Amazon invoice page and parse into receipts */
-async function fetchAndParseInvoices(
-  invoices: InvoiceRef[]
-): Promise<ScrapedReceipt[]> {
-  const receipts: ScrapedReceipt[] = [];
-
-  for (const ref of invoices) {
-    try {
-      console.log(
-        `[matcha] Fetching invoice for order ${ref.orderId}: ${ref.invoiceUrl}`
-      );
-      const response = await fetch(ref.invoiceUrl, { credentials: 'include' });
-
-      if (!response.ok) {
-        console.warn(
-          `[matcha] Invoice fetch failed for ${ref.orderId}: ${response.status}`
-        );
-        continue;
-      }
-
-      const html = await response.text();
-      const receipt = amazonScraper.parseInvoicePage(html, ref);
-      if (receipt) {
-        receipts.push(receipt);
-      }
-    } catch (err) {
-      console.warn(`[matcha] Error fetching invoice for ${ref.orderId}:`, err);
-    }
-  }
-
-  return receipts;
-}
-
-/** Fetch Amazon order list pages starting from nextUrl, collecting invoice URLs across all pages */
-async function fetchPaginatedInvoiceUrls(
-  nextUrl: string,
-  cursorDate?: string
-): Promise<InvoiceRef[]> {
-  const allInvoices: InvoiceRef[] = [];
-  let url: string | null = nextUrl;
-  let page = 2;
-  const MAX_PAGES = 50; // safety limit
-
-  while (url && page <= MAX_PAGES) {
-    console.log(`[matcha] Amazon: fetching page ${page}: ${url}`);
-    try {
-      const resp = await fetch(url, { credentials: 'include' });
-      if (!resp.ok) {
-        console.warn(
-          `[matcha] Amazon page ${page} fetch failed: ${resp.status}`
-        );
-        break;
-      }
-      const html = await resp.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-
-      const invoices = amazonScraper.collectInvoiceUrls(doc, cursorDate);
-      console.log(
-        `[matcha] Amazon: page ${page} — found ${invoices.length} invoices`
-      );
-      allInvoices.push(...invoices);
-
-      // Find next page link
-      const nextLink = doc.querySelector(
-        'ul.a-pagination li.a-last a'
-      ) as HTMLAnchorElement | null;
-      if (nextLink?.getAttribute('href')) {
-        const href = nextLink.getAttribute('href')!;
-        url = href.startsWith('http') ? href : `https://www.amazon.com${href}`;
-      } else {
-        url = null;
-      }
-      page++;
-    } catch (err) {
-      console.warn(`[matcha] Amazon page ${page} error:`, err);
-      break;
-    }
-  }
-
-  return allInvoices;
-}
-
 /** Close a tab if we auto-opened it for scraping */
 function closeIfAutoOpened(sender: chrome.runtime.MessageSender): void {
   const tabId = sender.tab?.id;
@@ -212,6 +86,20 @@ function closeIfAutoOpened(sender: chrome.runtime.MessageSender): void {
     console.log(`[matcha] Closing auto-opened tab ${tabId}`);
     chrome.tabs.remove(tabId).catch(() => {});
   }
+}
+
+/** Write sync progress to storage (popup listens via onChanged) */
+async function updateSyncProgress(
+  retailerId: string,
+  progress: { phase: string; current: number; total: number; message?: string } | null
+): Promise<void> {
+  const { syncProgress = {} } = await chrome.storage.local.get('syncProgress');
+  if (progress) {
+    syncProgress[retailerId] = progress;
+  } else {
+    delete syncProgress[retailerId];
+  }
+  await chrome.storage.local.set({ syncProgress });
 }
 
 chrome.runtime.onMessage.addListener(
@@ -225,56 +113,33 @@ chrome.runtime.onMessage.addListener(
     switch (message.type) {
       case 'SCRAPE_COMPLETE':
         closeIfAutoOpened(sender);
+        updateSyncProgress(message.retailerId, { phase: 'pushing', current: 0, total: 0, message: 'Saving to matcha...' });
         orchestrator
           .handleScrapedReceipts(message.retailerId, message.receipts)
-          .then(() => sendResponse({ success: true }))
-          .catch(console.error);
-        return true;
-
-      case 'INVOICE_URLS':
-        closeIfAutoOpened(sender);
-        fetchAndParseInvoices(message.invoices)
-          .then((receipts) => {
-            console.log(
-              `[matcha] Parsed ${receipts.length} invoices for ${message.retailerId}`
-            );
-            if (receipts.length > 0) {
-              return orchestrator.handleScrapedReceipts(
-                message.retailerId,
-                receipts
-              );
-            }
+          .then(() => {
+            updateSyncProgress(message.retailerId, null);
+            sendResponse({ success: true });
           })
-          .then(() => sendResponse({ success: true }))
           .catch((err) => {
-            console.error(`[matcha] Invoice processing error:`, err);
+            updateSyncProgress(message.retailerId, null);
+            console.error(`[matcha] Scrape processing error:`, err);
             sendResponse({ success: false, error: String(err) });
-          });
-        return true;
-
-      case 'FETCH_PAGINATED_INVOICES':
-        fetchPaginatedInvoiceUrls(message.nextUrl, message.cursorDate)
-          .then((invoices) => sendResponse(invoices))
-          .catch((err) => {
-            console.error('[matcha] Pagination fetch error:', err);
-            sendResponse([]);
           });
         return true;
 
       case 'SCRAPE_ERROR':
         closeIfAutoOpened(sender);
+        updateSyncProgress(message.retailerId, null);
         orchestrator
           .recordError(message.retailerId, message.error)
           .catch(console.error);
         break;
 
-      case 'COSTCO_AUTH_TOKENS':
-        // Legacy: content script now handles API calls directly
-        closeIfAutoOpened(sender);
+      case 'SYNC_PROGRESS':
+        updateSyncProgress(message.retailerId, message.progress);
         break;
 
       case 'MANUAL_SYNC_REQUEST':
-        // Open fresh tabs for all retailers (content scripts handle scraping)
         triggerDomScrapers()
           .then(() => sendResponse({ success: true }))
           .catch((err) => sendResponse({ success: false, error: String(err) }));

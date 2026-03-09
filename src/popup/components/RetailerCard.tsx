@@ -1,6 +1,6 @@
 import React from 'react';
 import type { RetailerConfig } from '../constants';
-import type { RetailerSyncStatus } from '../../types/messages';
+import type { RetailerSyncStatus, SyncProgress } from '../../types/messages';
 import { Card } from './ui/Card';
 import { StatusDot } from './ui/StatusDot';
 import { Badge } from './ui/Badge';
@@ -12,7 +12,9 @@ interface RetailerCardProps {
   retailer: RetailerConfig;
   status?: RetailerSyncStatus;
   syncing: boolean;
+  progress?: SyncProgress;
   onSync: (retailerId: string) => void;
+  onClick?: (retailerId: string) => void;
 }
 
 const AUTH_ERROR_PATTERNS = [/log\s*in/i, /session\s*expired/i, /auth\s*token/i, /please\s*sign\s*in/i];
@@ -26,7 +28,9 @@ export function RetailerCard({
   retailer,
   status,
   syncing,
+  progress,
   onSync,
+  onClick,
 }: RetailerCardProps) {
   const hasSynced = !!status?.lastSyncedAt;
   const hasError = !!status?.lastError;
@@ -35,7 +39,10 @@ export function RetailerCard({
   const dotVariant = hasError ? 'error' : hasSynced ? 'success' : 'idle';
 
   return (
-    <Card className="animate-fade-in">
+    <Card
+      className={`animate-fade-in ${onClick ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
+      onClick={onClick ? () => onClick(retailer.id) : undefined}
+    >
       {/* Row 1: Icon + Name + Status */}
       <div className="flex items-center gap-2">
         <span className="text-base">{retailer.icon}</span>
@@ -50,24 +57,49 @@ export function RetailerCard({
           <Button
             variant="ghost"
             size="sm"
-            loading={syncing}
+            loading={false}
+            disabled={syncing}
             onClick={(e) => {
               e.stopPropagation();
               onSync(retailer.id);
             }}
             title={`Sync ${retailer.name}`}
           >
-            {!syncing && <RefreshCw size={12} />}
+            <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
           </Button>
         </div>
       </div>
 
-      {/* Row 2: Last sync time */}
-      <div className="mt-1 text-xs text-muted-foreground">
-        {hasSynced
-          ? `Last sync: ${timeAgo(status!.lastSyncedAt!)}`
-          : 'Never synced'}
-      </div>
+      {/* Row 2: Progress, "Syncing...", or last sync time */}
+      {progress ? (
+        <div className="mt-1.5">
+          <div className="text-xs text-muted-foreground mb-1">
+            {progress.message ?? (progress.phase === 'fetching'
+              ? `${progress.current}/${progress.total} orders`
+              : progress.phase === 'pushing'
+              ? 'Saving to matcha...'
+              : 'Scanning...')}
+          </div>
+          <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+            {progress.phase === 'fetching' && progress.total > 0 ? (
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }}
+              />
+            ) : (
+              <div className="h-full bg-primary/60 rounded-full animate-pulse w-full" />
+            )}
+          </div>
+        </div>
+      ) : syncing ? (
+        <div className="mt-1 text-xs text-muted-foreground">Syncing...</div>
+      ) : (
+        <div className="mt-1 text-xs text-muted-foreground">
+          {hasSynced
+            ? `Last sync: ${timeAgo(status!.lastSyncedAt!)}`
+            : 'Never synced'}
+        </div>
+      )}
 
       {/* Row 3: Error (if any) */}
       {hasError && (

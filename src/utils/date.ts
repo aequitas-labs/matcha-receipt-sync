@@ -1,3 +1,8 @@
+/** Format ISO date as a short human-readable string, e.g. "Jan 1, 2025" */
+export function formatShortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 /** Relative time string (e.g. "2h ago", "3d ago", "just now") */
 export function timeAgo(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();

@@ -1,5 +1,6 @@
 import { MessageBridge } from '../../content/message-bridge';
 import { showToast } from '../../content/toast';
+import { formatShortDate } from '../../utils/date';
 
 /**
  * Walmart ISOLATED world content script.
@@ -35,11 +36,15 @@ function waitForMainReady(): Promise<void> {
 }
 
 async function run(): Promise<void> {
+  const { syncProgress = {} } = await chrome.storage.local.get('syncProgress');
+  if (syncProgress[RETAILER_ID]) {
+    console.log('[matcha] Walmart: sync already in progress, skipping');
+    return;
+  }
   await waitForMainReady();
   showToast('Scanning Walmart orders...', 'info');
 
-  const cursor = await bridge.getCursor(RETAILER_ID);
-  const startDate = cursor?.lastSyncedAt || '2024-01-01T00:00:00Z';
+  const startDate = await bridge.getSyncFromDate(RETAILER_ID);
 
   const requestId = crypto.randomUUID();
 
@@ -104,7 +109,7 @@ async function run(): Promise<void> {
     orderDate: new Date(r.orderDate),
     totalAmount: r.total,
     tax: r.tax,
-    orderUrl: `https://www.walmart.com/orders/${r.orderId}`,
+    orderUrl: `https://www.walmart.com/orders/${r.orderId.replace(/-/g, '')}`,
     items: r.items,
     rawData: r.rawData,
   }));
@@ -114,7 +119,8 @@ async function run(): Promise<void> {
   if (mapped.length > 0) {
     showToast(`Found ${mapped.length} order(s) from Walmart`, 'success');
   } else {
-    showToast('No new Walmart orders found', 'info');
+    const since = startDate ? ` since ${formatShortDate(startDate)}` : '';
+    showToast(`No new Walmart orders${since}`, 'info');
   }
 }
 

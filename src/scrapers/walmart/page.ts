@@ -13,32 +13,12 @@
 const WALMART_GRAPHQL_BASE =
   'https://www.walmart.com/orchestra/cph/graphql/PurchaseHistoryV3/1c1a8ff73cf03b3b5d23ae41db2d8f296f1baee3e92608116a70514f72ce3570';
 
+import { type WalmartOrder, parseOrders } from './parser';
+
 interface WalmartFetchRequest {
   type: 'MATCHA_WALMART_FETCH';
   requestId: string;
   startDate: string;
-}
-
-interface WalmartItem {
-  name?: string;
-  quantity?: number;
-  linePrice?: number;
-  unitPrice?: number;
-}
-
-interface WalmartGroup {
-  items?: WalmartItem[];
-}
-
-interface WalmartOrder {
-  id?: string;
-  displayId?: string;
-  orderDate?: string;
-  priceDetails?: {
-    orderTotal?: { value?: number };
-    subTotal?: { value?: number };
-  };
-  groups?: WalmartGroup[];
 }
 
 interface WalmartGqlResponse {
@@ -87,93 +67,81 @@ function getWalmartHeaders(): Record<string, string> {
   };
 }
 
-function parseOrders(
-  orders: WalmartOrder[],
-  cutoff: Date
-): {
-  receipts: Array<{
-    orderId: string;
-    orderDate: string;
-    total: number;
-    tax?: number;
-    items: Array<{
-      name: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-    }>;
-    rawData?: Record<string, unknown>;
-  }>;
-  reachedCutoff: boolean;
-} {
-  const receipts: Array<{
-    orderId: string;
-    orderDate: string;
-    total: number;
-    tax?: number;
-    items: Array<{
-      name: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-    }>;
-    rawData?: Record<string, unknown>;
-  }> = [];
+/**
+ * Fetch the Walmart order detail page and parse item prices from HTML.
+ * Uses data-testid attributes: productName, line-price, and bill-item-quantity class.
+ * Falls back to text-based parsing (split on "Qty") if HTML parsing finds nothing.
+ */
+async function fetchOrderDetailItems(
+  orderId: string
+): Promise<Map<string, { quantity: number; unitPrice: number; totalPrice: number }>> {
+  const result = new Map<string, { quantity: number; unitPrice: number; totalPrice: number }>();
+  try {
+    const cleanId = orderId.replace(/-/g, '');
+    const resp = await fetch(`https://www.walmart.com/orders/${cleanId}`, {
+      credentials: 'include',
+    });
+    if (!resp.ok) return result;
+    const html = await resp.text();
 
-  let reachedCutoff = false;
+    // HTML parsing: find productName + line-price pairs
+    // Each item block has data-testid="productName" and data-testid="line-price"
+    const namePattern = /data-testid="productName"[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/gi;
+    const pricePattern = /data-testid="line-price"[^>]*>[\s\S]*?<span[^>]*>\s*\$([\d,]+\.\d{2})\s*<\/span>/gi;
+    const qtyPattern = /bill-item-quantity[^>]*>[^<]*?Qty\s*(\d+)/gi;
 
-  for (const order of orders) {
-    const orderId = order.displayId || order.id;
-    if (!orderId) continue;
+    const names: string[] = [];
+    const prices: number[] = [];
+    const quantities: number[] = [];
 
-    const orderDate = order.orderDate ? new Date(order.orderDate) : null;
-    if (!orderDate || isNaN(orderDate.getTime())) continue;
-
-    if (orderDate < cutoff) {
-      reachedCutoff = true;
-      break;
+    let m;
+    while ((m = namePattern.exec(html)) !== null) {
+      const name = m[1].replace(/<[^>]+>/g, '').trim();
+      if (name.length >= 3) names.push(name);
+    }
+    while ((m = pricePattern.exec(html)) !== null) {
+      prices.push(parseFloat(m[1].replace(/,/g, '')));
+    }
+    while ((m = qtyPattern.exec(html)) !== null) {
+      quantities.push(parseInt(m[1], 10));
     }
 
-    const total = order.priceDetails?.orderTotal?.value ?? 0;
-    const items: Array<{
-      name: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-    }> = [];
+    // Match names with prices (they appear in order)
+    const count = Math.min(names.length, prices.length);
+    for (let i = 0; i < count; i++) {
+      const qty = quantities[i] ?? 1;
+      const totalPrice = prices[i];
+      const unitPrice = qty > 0 ? totalPrice / qty : totalPrice;
+      result.set(names[i].toLowerCase(), { quantity: qty, unitPrice, totalPrice });
+    }
 
-    for (const group of order.groups ?? []) {
-      for (const item of group.items ?? []) {
-        if (!item.name) continue;
-        const qty = item.quantity ?? 1;
-        const lineTotal = item.linePrice ?? 0;
-        const unit = item.unitPrice ?? (qty > 0 ? lineTotal / qty : 0);
-        items.push({
-          name: item.name,
-          quantity: qty,
-          unitPrice: unit,
-          totalPrice: lineTotal,
-        });
+    // Fallback: text-based parsing if HTML parsing found nothing
+    if (result.size === 0) {
+      const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+      const chunks = text.split(/Qty\s+(\d+)/i);
+      for (let i = 1; i < chunks.length; i += 2) {
+        const qty = parseInt(chunks[i], 10) || 1;
+        const after = chunks[i + 1] || '';
+        const priceMatch = after.match(/\$([\d,]+\.\d{2})/);
+        if (!priceMatch) continue;
+        const totalPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
+
+        // Name is at the end of the preceding chunk
+        const before = chunks[i - 1];
+        const nameMatch = before.match(/([A-Z][^$]{5,}?)\s*$/);
+        if (!nameMatch) continue;
+        const name = nameMatch[1].trim();
+        if (name.length < 3) continue;
+
+        result.set(name.toLowerCase(), { quantity: qty, unitPrice: totalPrice / qty, totalPrice });
       }
     }
 
-    const subTotal = order.priceDetails?.subTotal?.value;
-    receipts.push({
-      orderId,
-      orderDate: orderDate.toISOString(),
-      total,
-      tax:
-        subTotal != null && total > subTotal
-          ? Math.round((total - subTotal) * 100) / 100
-          : undefined,
-      items,
-      rawData: {
-        subTotal,
-      },
-    });
+    console.log(`[matcha] Walmart MAIN: order detail enrichment found ${result.size} items`);
+  } catch (err) {
+    console.warn('[matcha] Walmart MAIN: order detail fetch failed:', err);
   }
-
-  return { receipts, reachedCutoff };
+  return result;
 }
 
 window.addEventListener('message', async (event) => {
@@ -268,6 +236,25 @@ window.addEventListener('message', async (event) => {
       )
         break;
       nextCursor = data.data.purchaseHistory.pageInfo.nextPageCursor;
+    }
+
+    // Enrich items that have zero prices from print bill
+    for (const receipt of allReceipts) {
+      const hasZeroPriceItems = receipt.items.some((i) => i.totalPrice === 0 && i.unitPrice === 0);
+      if (!hasZeroPriceItems) continue;
+
+      const billItems = await fetchOrderDetailItems(receipt.orderId);
+      if (billItems.size === 0) continue;
+
+      for (const item of receipt.items) {
+        if (item.totalPrice !== 0 || item.unitPrice !== 0) continue;
+        const billItem = billItems.get(item.name.toLowerCase());
+        if (billItem) {
+          item.quantity = billItem.quantity;
+          item.unitPrice = billItem.unitPrice;
+          item.totalPrice = billItem.totalPrice;
+        }
+      }
     }
 
     console.log(

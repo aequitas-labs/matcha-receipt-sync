@@ -1,4 +1,4 @@
-const COOKIE_NAME = 'better_auth_session';
+const COOKIE_NAME = 'better-auth.session_token';
 const MATCHA_URL = 'https://matcha.money';
 
 export interface SessionStatus {

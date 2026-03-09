@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { ChevronDown } from './ui/Icons';
+import { DebugPanel } from './DebugPanel';
 import { RETAILERS } from '../constants';
 
 const INTERVAL_OPTIONS = [
@@ -219,6 +220,9 @@ export function SettingsPanelView({
             </div>
           )}
         </Card>
+
+        {/* Debug log */}
+        <DebugPanel />
       </div>
     </div>
   );

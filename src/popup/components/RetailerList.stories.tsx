@@ -9,6 +9,7 @@ const meta: Meta<typeof RetailerList> = {
     syncingRetailers: new Set(),
     enabledRetailers: new Set(['amazon', 'costco', 'walmart', 'target']),
     onSyncRetailer: () => {},
+    onRetailerClick: () => {},
   },
 };
 

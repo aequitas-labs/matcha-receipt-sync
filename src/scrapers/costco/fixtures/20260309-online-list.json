@@ -1,0 +1,91 @@
+// https://ecom-api.costco.com/ebusiness/order/v1/orders/graphql
+// POST {"query":"query getOnlineOrders($startDate:String!, $endDate:String!, $pageNumber:Int , $pageSize:Int, $warehouseNumber:String! ){\n    getOnlineOrders(startDate:$startDate, endDate:$endDate, pageNumber : $pageNumber, pageSize :  $pageSize, warehouseNumber :  $warehouseNumber) {\n      pageNumber\n      pageSize\n      totalNumberOfRecords\n      bcOrders {\n        orderHeaderId\n        orderPlacedDate : orderedDate\n        orderNumber : sourceOrderNumber \n        orderTotal\n        warehouseNumber\n        status\n        emailAddress\n        orderCancelAllowed\n        orderPaymentFailed : orderPaymentEditAllowed\n        orderReturnAllowed\n        orderLineItems {\n          orderLineItemCancelAllowed\n        \torderLineItemId\n          orderReturnAllowed\n          itemId\n          itemNumber\n          itemTypeId\n          lineNumber\n          itemDescription\n          deliveryDate\n          warehouseNumber\n          status\n          orderStatus\n          parentOrderLineItemId\n          isFSAEligible\n          shippingType\n          shippingTimeFrame\n          isShipToWarehouse\n          carrierItemCategory\n          carrierContactPhone\n          programTypeId\n          isBuyAgainEligible\n          scheduledDeliveryDate\n          scheduledDeliveryDateEnd\n          configuredItemData\n          shipment {\n            shipmentId             \n            orderHeaderId\n            orderShipToId \n            lineNumber \n            orderNumber\n            shippingType \n            shippingTimeFrame \n            shippedDate \n            packageNumber \n            trackingNumber \n            trackingSiteUrl \n            carrierName         \n            estimatedArrivalDate \n            deliveredDate \n            isDeliveryDelayed \n            isEstimatedArrivalDateEligible \n            statusTypeId \n            status \n            pickUpReadyDate\n            pickUpCompletedDate\n            reasonCode\n            trackingEvent {\n              event\n              carrierName\n              eventDate\n              estimatedDeliveryDate\n              scheduledDeliveryDate\n              trackingNumber\n            }\n          }\n        }\n      }\n    }\n  }","variables":{"pageNumber":1,"pageSize":10,"startDate":"2025-10-01","endDate":"2025-12-31","warehouseNumber":"847"}}
+
+{
+  "data": {
+    "getOnlineOrders": [
+      {
+        "pageNumber": 1,
+        "pageSize": 10,
+        "totalNumberOfRecords": 1,
+        "bcOrders": [
+          {
+            "orderHeaderId": "850170577",
+            "orderPlacedDate": "2024-05-03T08:39:32.78",
+            "orderNumber": "1109813695",
+            "orderTotal": 381.59,
+            "warehouseNumber": 847,
+            "status": "Delivered",
+            "emailAddress": "test@example.com",
+            "orderCancelAllowed": false,
+            "orderPaymentFailed": false,
+            "orderReturnAllowed": true,
+            "orderLineItems": [
+              {
+                "orderLineItemCancelAllowed": false,
+                "orderLineItemId": "1176695701",
+                "orderReturnAllowed": true,
+                "itemId": "1184635",
+                "itemNumber": "1692782",
+                "itemTypeId": 14,
+                "lineNumber": 1,
+                "itemDescription": "Keter Cortina Alto Premium Modern Vertical Outdoor Storage Shed",
+                "deliveryDate": "2024-05-09T00:00:00",
+                "warehouseNumber": 847,
+                "status": "Delivered",
+                "orderStatus": "Available",
+                "parentOrderLineItemId": "",
+                "isFSAEligible": false,
+                "shippingType": "Standard",
+                "shippingTimeFrame": "1 Day(s)",
+                "isShipToWarehouse": false,
+                "carrierItemCategory": "Small Package",
+                "carrierContactPhone": "8007425877",
+                "programTypeId": 5,
+                "isBuyAgainEligible": true,
+                "scheduledDeliveryDate": null,
+                "scheduledDeliveryDateEnd": null,
+                "configuredItemData": null,
+                "shipment": [
+                  {
+                    "shipmentId": "1075506292",
+                    "orderHeaderId": "850170577",
+                    "orderShipToId": "",
+                    "lineNumber": 1,
+                    "orderNumber": "1109813695",
+                    "shippingType": null,
+                    "shippingTimeFrame": null,
+                    "shippedDate": "2024-05-04T00:00:00",
+                    "packageNumber": "0098112617",
+                    "trackingNumber": "1Z87X7100310791916",
+                    "trackingSiteUrl": "https://shipmenttracking.costco.com/us/odn/1109813695?l=en&fid=00847004641621",
+                    "carrierName": "United Parcel Service",
+                    "estimatedArrivalDate": "2024-05-09T00:00:00",
+                    "deliveredDate": "2024-05-09T10:12:30",
+                    "isDeliveryDelayed": false,
+                    "isEstimatedArrivalDateEligible": false,
+                    "statusTypeId": 9,
+                    "status": "Shipped",
+                    "pickUpReadyDate": null,
+                    "pickUpCompletedDate": null,
+                    "reasonCode": 0,
+                    "trackingEvent": [
+                      {
+                        "event": "delivered",
+                        "carrierName": "UPS",
+                        "eventDate": "2024-05-09T13:12:30",
+                        "estimatedDeliveryDate": "2024-05-09T00:00:00",
+                        "scheduledDeliveryDate": null,
+                        "trackingNumber": "1Z87X7100310791916"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

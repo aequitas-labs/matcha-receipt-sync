@@ -10,8 +10,16 @@
 
 export type ToastLevel = 'success' | 'info' | 'error';
 
-const COLORS: Record<ToastLevel, { bg: string; border: string; text: string; icon: string }> = {
-  success: { bg: '#f0fdf4', border: '#88b04b', text: '#2f3e2e', icon: '#88b04b' },
+const COLORS: Record<
+  ToastLevel,
+  { bg: string; border: string; text: string; icon: string }
+> = {
+  success: {
+    bg: '#f0fdf4',
+    border: '#88b04b',
+    text: '#2f3e2e',
+    icon: '#88b04b',
+  },
   info: { bg: '#faf9f5', border: '#e0c097', text: '#2f3e2e', icon: '#e0c097' },
   error: { bg: '#fef2f2', border: '#e57373', text: '#991b1b', icon: '#e57373' },
 };
@@ -67,7 +75,8 @@ export function showToast(message: string, level: ToastLevel = 'info'): void {
     border: `1px solid ${c.border}`,
     boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
     maxWidth: '360px',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     opacity: '0',
     transform: 'translateY(8px)',
     transition: 'opacity 0.3s ease, transform 0.3s ease',
@@ -81,12 +90,12 @@ export function showToast(message: string, level: ToastLevel = 'info'): void {
     el.style.transform = 'translateY(0)';
   });
 
-  // Auto-dismiss after 4 seconds
+  // Auto-dismiss after 10 seconds
   setTimeout(() => {
     el.style.opacity = '0';
     el.style.transform = 'translateY(8px)';
     setTimeout(() => el.remove(), 300);
-  }, 4000);
+  }, 10000);
 }
 
 function escapeHtml(str: string): string {

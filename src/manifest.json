@@ -24,6 +24,16 @@
         "https://www.amazon.com/gp/your-account/order-history*",
         "https://www.amazon.com/gp/css/order-history*"
       ],
+      "js": ["content-amazon-main.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.amazon.com/your-orders*",
+        "https://www.amazon.com/gp/your-account/order-history*",
+        "https://www.amazon.com/gp/css/order-history*"
+      ],
       "js": ["content-amazon.js"],
       "run_at": "document_idle"
     },

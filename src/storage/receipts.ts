@@ -4,6 +4,24 @@ const STORAGE_KEY = 'scrapedReceipts';
 
 type ReceiptStore = Record<string, ScrapedReceipt[]>;
 
+/** Serialize a receipt for storage (Date → ISO string) */
+function serializeReceipt(receipt: ScrapedReceipt): ScrapedReceipt {
+  return {
+    ...receipt,
+    orderDate: (receipt.orderDate instanceof Date
+      ? receipt.orderDate.toISOString()
+      : String(receipt.orderDate)) as unknown as Date,
+  };
+}
+
+/** Deserialize a receipt from storage (ISO string → Date) */
+function deserializeReceipt(receipt: ScrapedReceipt): ScrapedReceipt {
+  return {
+    ...receipt,
+    orderDate: new Date(receipt.orderDate as unknown as string),
+  };
+}
+
 /** Save receipts to local storage, deduplicating by retailer+orderId */
 export async function saveReceipts(receipts: ScrapedReceipt[]): Promise<void> {
   const { [STORAGE_KEY]: existing = {} } =
@@ -14,11 +32,12 @@ export async function saveReceipts(receipts: ScrapedReceipt[]): Promise<void> {
     const key = receipt.retailer;
     if (!store[key]) store[key] = [];
 
+    const serialized = serializeReceipt(receipt);
     const idx = store[key].findIndex((r) => r.orderId === receipt.orderId);
     if (idx >= 0) {
-      store[key][idx] = receipt; // update existing
+      store[key][idx] = serialized;
     } else {
-      store[key].push(receipt);
+      store[key].push(serialized);
     }
   }
 
@@ -28,7 +47,7 @@ export async function saveReceipts(receipts: ScrapedReceipt[]): Promise<void> {
 export async function getAllReceipts(): Promise<ScrapedReceipt[]> {
   const { [STORAGE_KEY]: store = {} } =
     await chrome.storage.local.get(STORAGE_KEY);
-  return Object.values(store as ReceiptStore).flat();
+  return Object.values(store as ReceiptStore).flat().map(deserializeReceipt);
 }
 
 export async function getReceiptsByRetailer(
@@ -36,7 +55,7 @@ export async function getReceiptsByRetailer(
 ): Promise<ScrapedReceipt[]> {
   const { [STORAGE_KEY]: store = {} } =
     await chrome.storage.local.get(STORAGE_KEY);
-  return (store as ReceiptStore)[retailerId] ?? [];
+  return ((store as ReceiptStore)[retailerId] ?? []).map(deserializeReceipt);
 }
 
 export async function getReceiptCount(): Promise<number> {

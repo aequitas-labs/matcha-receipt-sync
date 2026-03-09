@@ -5,13 +5,13 @@ import { UpsellBanner } from './UpsellBanner';
 import { RetailerList } from './RetailerList';
 import { SyncButton } from './SyncButton';
 import { ExportPanel } from './ExportPanel';
-import { DebugPanel } from './DebugPanel';
 import { SettingsPanel } from './SettingsPanel';
-import type { SyncStatusMap } from '../../types/messages';
+import { RetailerDetail } from './RetailerDetail';
+import type { SyncStatusMap, SyncProgress } from '../../types/messages';
 import { checkSession } from '../../auth/session';
 import { RETAILERS } from '../constants';
 
-type View = 'main' | 'settings';
+type View = 'main' | 'settings' | 'retailer-detail';
 
 const ALL_RETAILER_IDS = new Set(RETAILERS.map((r) => r.id));
 
@@ -23,8 +23,10 @@ export function App() {
     new Set()
   );
   const [useFakeApi, setUseFakeApi] = useState(false);
+  const [syncProgress, setSyncProgress] = useState<Record<string, SyncProgress>>({});
   const [view, setView] = useState<View>('main');
   const [enabledRetailers, setEnabledRetailers] = useState<Set<string>>(ALL_RETAILER_IDS);
+  const [selectedRetailer, setSelectedRetailer] = useState<string | null>(null);
 
   // Detect dark mode from system preference
   useEffect(() => {
@@ -36,14 +38,54 @@ export function App() {
   useEffect(() => {
     checkSession().then((s) => setConnected(s.connected));
 
-    chrome.storage.local.get(['useFakeApi', 'enabledRetailers'], (result) => {
+    chrome.storage.local.get(['useFakeApi', 'enabledRetailers', 'syncingRetailers', 'syncProgress'], (result) => {
       setUseFakeApi(result.useFakeApi !== false);
       if (result.enabledRetailers) {
         setEnabledRetailers(new Set(result.enabledRetailers));
       }
+      if (result.syncingRetailers) {
+        setSyncingRetailers(new Set(result.syncingRetailers));
+      }
+      if (result.syncProgress) {
+        setSyncProgress(result.syncProgress);
+      }
     });
 
     refreshStatus();
+  }, []);
+
+  // Real-time updates from storage changes
+  useEffect(() => {
+    const listener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.syncStatus) {
+        setStatus(changes.syncStatus.newValue ?? {});
+      }
+      if (changes.useFakeApi !== undefined) {
+        setUseFakeApi(changes.useFakeApi.newValue !== false);
+      }
+      if (changes.enabledRetailers) {
+        setEnabledRetailers(
+          changes.enabledRetailers.newValue
+            ? new Set(changes.enabledRetailers.newValue)
+            : ALL_RETAILER_IDS
+        );
+      }
+      if (changes.syncingRetailers) {
+        setSyncingRetailers((prev) => {
+          const fromStorage = new Set<string>(changes.syncingRetailers.newValue ?? []);
+          const merged = new Set(prev);
+          for (const id of merged) { if (!fromStorage.has(id)) merged.delete(id); }
+          for (const id of fromStorage) { merged.add(id); }
+          return merged;
+        });
+      }
+      if (changes.syncProgress) {
+        setSyncProgress(changes.syncProgress.newValue ?? {});
+      }
+    };
+
+    chrome.storage.onChanged.addListener(listener);
+    return () => chrome.storage.onChanged.removeListener(listener);
   }, []);
 
   const refreshStatus = () => {
@@ -52,27 +94,23 @@ export function App() {
     });
   };
 
+  // A retailer is "active" if it has sync progress or is in syncingRetailers
+  const isRetailerActive = (id: string) => !!syncProgress[id] || syncingRetailers.has(id);
+  const anyActive = Object.keys(syncProgress).length > 0 || syncingRetailers.size > 0;
+  const activeRetailerIds = [...new Set([...Object.keys(syncProgress), ...syncingRetailers])];
+
   const handleSyncAll = () => {
+    if (anyActive) return;
     setSyncingAll(true);
     chrome.runtime.sendMessage({ type: 'MANUAL_SYNC_REQUEST' }, () => {
       setSyncingAll(false);
-      refreshStatus();
     });
   };
 
   const handleSyncRetailer = (retailerId: string) => {
+    if (isRetailerActive(retailerId)) return;
     setSyncingRetailers((prev) => new Set(prev).add(retailerId));
-    chrome.runtime.sendMessage(
-      { type: 'SYNC_RETAILER_REQUEST', retailerId },
-      () => {
-        setSyncingRetailers((prev) => {
-          const next = new Set(prev);
-          next.delete(retailerId);
-          return next;
-        });
-        refreshStatus();
-      }
-    );
+    chrome.runtime.sendMessage({ type: 'SYNC_RETAILER_REQUEST', retailerId });
   };
 
   const handleOpenInWindow = () => {
@@ -83,6 +121,11 @@ export function App() {
       height: 600,
     });
     window.close();
+  };
+
+  const handleRetailerClick = (retailerId: string) => {
+    setSelectedRetailer(retailerId);
+    setView('retailer-detail');
   };
 
   return (
@@ -99,15 +142,13 @@ export function App() {
         <SettingsPanel
           useFakeApi={useFakeApi}
           connected={connected}
+          onBack={() => setView('main')}
+        />
+      ) : view === 'retailer-detail' && selectedRetailer ? (
+        <RetailerDetail
+          retailerId={selectedRetailer}
           onBack={() => {
-            // Reload enabled retailers in case they changed
-            chrome.storage.local.get(['enabledRetailers'], (result) => {
-              if (result.enabledRetailers) {
-                setEnabledRetailers(new Set(result.enabledRetailers));
-              } else {
-                setEnabledRetailers(ALL_RETAILER_IDS);
-              }
-            });
+            setSelectedRetailer(null);
             setView('main');
           }}
         />
@@ -119,13 +160,14 @@ export function App() {
           <RetailerList
             status={status}
             syncingRetailers={syncingRetailers}
+            syncProgress={syncProgress}
             enabledRetailers={enabledRetailers}
             onSyncRetailer={handleSyncRetailer}
+            onRetailerClick={handleRetailerClick}
           />
 
-          <SyncButton loading={syncingAll} onClick={handleSyncAll} />
+          <SyncButton loading={syncingAll || anyActive} activeCount={activeRetailerIds.length} onClick={handleSyncAll} />
           <ExportPanel />
-          <DebugPanel />
         </>
       )}
     </div>

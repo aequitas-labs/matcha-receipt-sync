@@ -1,6 +1,8 @@
 import type {
   CreateTransactionRequest,
   CreateTransactionResponse,
+  BatchUpsertReceiptsRequest,
+  BatchUpsertReceiptsResponse,
 } from '../types/api';
 import { FakeMatchaApiClient } from './fake';
 import { RealMatchaApiClient } from './real';
@@ -9,6 +11,9 @@ export interface MatchaApiClient {
   createTransaction(
     req: CreateTransactionRequest
   ): Promise<CreateTransactionResponse>;
+  batchUpsertReceipts(
+    req: BatchUpsertReceiptsRequest
+  ): Promise<BatchUpsertReceiptsResponse>;
   isConnected(): Promise<boolean>;
 }
 

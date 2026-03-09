@@ -33,3 +33,25 @@ export interface CreateTransactionResponse {
   account_id: string;
   created_at: string;
 }
+
+export interface BatchUpsertReceiptsRequest {
+  receipts: Array<{
+    retailer: string;
+    orderId: string;
+    orderDate: string;
+    totalAmount: number;
+    tax?: number;
+    orderUrl?: string;
+    items: Array<{
+      name: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+    }>;
+  }>;
+}
+
+export interface BatchUpsertReceiptsResponse {
+  created: number;
+  updated: number;
+}

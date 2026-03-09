@@ -2,6 +2,8 @@ import type { MatchaApiClient } from './client';
 import type {
   CreateTransactionRequest,
   CreateTransactionResponse,
+  BatchUpsertReceiptsRequest,
+  BatchUpsertReceiptsResponse,
 } from '../types/api';
 import { logRequest } from '../debug/logger';
 
@@ -32,6 +34,20 @@ export class FakeMatchaApiClient implements MatchaApiClient {
     // Simulate network latency
     await new Promise((r) => setTimeout(r, 50));
     return transaction;
+  }
+
+  async batchUpsertReceipts(
+    req: BatchUpsertReceiptsRequest
+  ): Promise<BatchUpsertReceiptsResponse> {
+    const count = req.receipts.length;
+    await logRequest({
+      endpoint: '/api/v1/receipts/batch',
+      method: 'POST',
+      payload: req,
+      response: { created: count, updated: 0 },
+    });
+    await new Promise((r) => setTimeout(r, 50));
+    return { created: count, updated: 0 };
   }
 
   async isConnected(): Promise<boolean> {
