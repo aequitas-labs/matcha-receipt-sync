@@ -3,11 +3,14 @@ export interface TransactionMetadata {
   orderId: string;
   orderUrl?: string;
   tax?: number;
+  paymentMethods?: { type: string; last4?: string }[];
   items?: {
     name: string;
     quantity: number;
     unitPrice: number;
     totalPrice: number;
+    /** Per-unit cost including proportional share of tax and shipping */
+    effectivePrice?: number;
   }[];
 }
 
@@ -42,11 +45,14 @@ export interface BatchUpsertReceiptsRequest {
     totalAmount: number;
     tax?: number;
     orderUrl?: string;
+    paymentMethods?: { type: string; last4?: string }[];
     items: Array<{
       name: string;
       quantity: number;
       unitPrice: number;
       totalPrice: number;
+      /** Per-unit cost including proportional share of tax and shipping */
+      effectivePrice?: number;
     }>;
   }>;
 }

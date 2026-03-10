@@ -50,7 +50,7 @@
           "cardExpireMonth": 6,
           "cardExpireYear": 2027,
           "nameOnCard": "John Smith",
-          "cardNumber": "XXXX",
+          "cardNumber": "4567",
           "isGOMPayment": false,
           "storedValueBucket": ""
         }

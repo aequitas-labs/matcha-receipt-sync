@@ -47,7 +47,7 @@ export function RetailerDetail({ retailerId, onBack }: Props) {
           {retailer?.name ?? retailerId}
         </h2>
         <span className="text-xs text-muted-foreground ml-auto">
-          {receipts.length} order{receipts.length !== 1 ? 's' : ''}
+          {receipts.length} receipt{receipts.length !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -113,7 +113,19 @@ function OrderCard({
               </a>
             )}
           </div>
-          <div className="text-[11px] text-muted-foreground">{dateStr}</div>
+          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+            <span>{dateStr}</span>
+            {receipt.paymentMethods && receipt.paymentMethods.length > 0 && (
+              <>
+                <span>·</span>
+                <span>
+                  {receipt.paymentMethods.map((p) =>
+                    p.last4 ? `${p.type} ••${p.last4}` : p.type
+                  ).join(', ')}
+                </span>
+              </>
+            )}
+          </div>
         </div>
         <span className="text-xs font-semibold text-foreground shrink-0">
           ${receipt.totalAmount.toFixed(2)}

@@ -57,11 +57,56 @@ npm run typecheck # type checking
 
 Load `dist/` as an unpacked extension in `chrome://extensions` (developer mode).
 
-## 6. Adding a New Retailer
+## 6. Scraper Details
 
-1. Create `src/scrapers/<retailer>/` with content script(s) and scraper class
-2. Add MAIN world script if the retailer needs page-context access
+### Target (`src/scrapers/target/`)
+
+Uses the **two-world pattern** (MAIN + ISOLATED). The MAIN world script (`page.ts`) calls Target's APIs with the user's cookies.
+
+**API call flow:**
+
+- **Online orders:**
+  1. `GET /guest_order_aggregations/v1/order_history?order_purchase_type=ONLINE` — paginated order list
+  2. `GET /post_order_invoices/v1/orders/{orderId}/invoices` — invoice list per order
+  3. `GET /post_order_invoices/v1/orders/{orderId}/invoices/{invoiceId}` — line-item detail with per-item tax
+
+- **Store orders:**
+  1. `GET /guest_order_aggregations/v1/order_history?order_purchase_type=STORE` — paginated order list
+  2. `GET /guest_order_aggregations/v1/{storeReceiptId}/store_order_details` — JSON line items (no per-item tax)
+  3. `POST /receipts/v1/invoice` — HTML thermal receipt with per-item tax flags
+
+**Per-item taxability (store orders):**
+
+The JSON store order API provides only a lump-sum `total_taxes`. To distribute tax correctly, the scraper fetches the HTML receipt which has per-item tax flags:
+- `T` or `T+` = taxable (any flag containing "T")
+- `NF` = non-food / not taxed
+
+Items are matched between the two APIs by DPCI code (JSON uses dashes `206-06-7033`, HTML uses digits-only `206067033` — normalized via `normalizeDpci()`). The `taxable[]` array is passed to `computeEffectivePrices()` so tax is distributed only to taxable items.
+
+If the HTML receipt fetch fails, the scraper falls back to proportional tax distribution across all items.
+
+**Parser functions** (`parser.ts`):
+- `mapTargetInvoiceLines()` — online orders (per-item tax from API)
+- `mapTargetStoreLines()` — store orders (accepts optional `{ taxable }`)
+- `parseTargetReceiptHtml()` — HTML receipt → items with DPCI, tax flags, prices
+- `normalizeDpci()` — strips dashes from DPCI codes
+- `decodeHtmlEntities()` — decodes HTML entities in item names
+
+### Effective Price Computation (`src/utils/effectivePrice.ts`)
+
+`computeEffectivePrices(items, total, options?)` distributes discounts and tax across line items to compute a per-unit effective price. Used by Target and Costco scrapers.
+
+Options:
+- `tax?: number` — total tax amount to distribute
+- `taxable?: boolean[]` — per-item flags; when provided, tax is distributed only to taxable items (non-taxable items get effective price = their share of the non-tax total)
+
+## 7. Adding a New Retailer
+
+1. Create `src/scrapers/<retailer>/` with content script(s) and parser
+2. Add MAIN world script if the retailer needs page-context access (two-world pattern)
 3. Register the scraper in `src/scrapers/registry.ts`
 4. Add URL patterns and tab config to `RETAILER_TAB_CONFIG` in `src/background/service-worker.ts`
 5. Add content script entries to `src/manifest.json`
 6. Add webpack entry points in `webpack.config.js`
+7. Add fixtures in `src/scrapers/<retailer>/fixtures/` with real API response data
+8. Add parser tests in `src/scrapers/<retailer>/parser.test.ts`

@@ -11,7 +11,8 @@
     "https://www.walmart.com/*",
     "https://www.target.com/*",
     "https://api.target.com/*",
-    "https://matcha.money/*"
+    "https://matcha.money/*",
+    "https://us.i.posthog.com/*"
   ],
   "background": {
     "service_worker": "service-worker.js",

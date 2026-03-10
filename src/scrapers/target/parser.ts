@@ -14,7 +14,17 @@ export interface TargetOrderLine {
 
 export interface TargetStoreOrderLine {
   quantity: number;
-  item: { description: string; unit_price: string; list_price: string };
+  item: {
+    description: string;
+    unit_price: string;
+    list_price: string;
+    dpci?: string;
+  };
+}
+
+/** Normalize DPCI "206-06-7033" → "206067033" (strip dashes) */
+export function normalizeDpci(dpci: string): string {
+  return dpci.replace(/-/g, '');
 }
 
 export function decodeHtmlEntities(str: string): string {
@@ -74,7 +84,8 @@ export interface TargetStoreTotals {
 
 export function mapTargetStoreLines(
   orderLines: TargetStoreOrderLine[],
-  totals: TargetStoreTotals
+  totals: TargetStoreTotals,
+  options?: { taxable?: boolean[] }
 ): ScrapedItem[] {
   const items: ScrapedItem[] = orderLines.map((line) => {
     const qty = line.quantity || 1;
@@ -86,12 +97,16 @@ export function mapTargetStoreLines(
       totalPrice: Math.round(unitPrice * qty * 100) / 100,
     };
   });
-  return computeEffectivePrices(items, totals.total, { tax: totals.tax });
+  return computeEffectivePrices(items, totals.total, {
+    tax: totals.tax,
+    ...(options?.taxable ? { taxable: options.taxable } : {}),
+  });
 }
 
 export interface TargetReceiptHtmlItem {
   dpci: string;
   name: string;
+  taxFlag: string;
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -122,7 +137,7 @@ export function parseTargetReceiptHtml(html: string): TargetReceiptHtmlResult {
 
   // Each item row: DPCI inside div inside td, then name, tax-flag, price (5 tds total)
   const itemRowPattern =
-    /<td[^>]*>\s*<div[^>]*>\s*(\d{9})\s*<\/div>\s*<\/td><td[^>]*><div[^>]*>([\s\S]*?)<\/div><\/td><td[^>]*>[\s\S]*?<\/td><td[^>]*><div[^>]*>\$([\d,]+\.\d{2})&nbsp;<\/div><\/td>/gi;
+    /<td[^>]*>\s*<div[^>]*>\s*(\d{9})\s*<\/div>\s*<\/td><td[^>]*><div[^>]*>([\s\S]*?)<\/div><\/td><td[^>]*>[\s\S]*?<div[^>]*>([\s\S]*?)<\/div>[\s\S]*?<\/td><td[^>]*><div[^>]*>\$([\d,]+\.\d{2})&nbsp;<\/div><\/td>/gi;
 
   // Quantity sub-row within the segment between two items: "2 @ $4.99 ea"
   const qtySubRowPattern = /(\d+)\s*@\s*\$([\d,]+\.\d{2})\s*ea?/i;
@@ -130,6 +145,7 @@ export function parseTargetReceiptHtml(html: string): TargetReceiptHtmlResult {
   const rawItems: Array<{
     dpci: string;
     name: string;
+    taxFlag: string;
     totalPrice: number;
     index: number;
   }> = [];
@@ -138,7 +154,8 @@ export function parseTargetReceiptHtml(html: string): TargetReceiptHtmlResult {
     rawItems.push({
       dpci: m[1],
       name: m[2].trim(),
-      totalPrice: parseFloat(m[3].replace(/,/g, '')),
+      taxFlag: m[3].trim(),
+      totalPrice: parseFloat(m[4].replace(/,/g, '')),
       index: m.index,
     });
   }
@@ -158,6 +175,7 @@ export function parseTargetReceiptHtml(html: string): TargetReceiptHtmlResult {
     items.push({
       dpci: rawItems[i].dpci,
       name: rawItems[i].name,
+      taxFlag: rawItems[i].taxFlag,
       quantity,
       unitPrice,
       totalPrice: rawItems[i].totalPrice,

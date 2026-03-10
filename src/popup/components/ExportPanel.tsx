@@ -3,6 +3,8 @@ import { Button } from './ui/Button';
 import { Download } from './ui/Icons';
 import { getAllReceipts, getReceiptCount } from '../../storage/receipts';
 import { exportAsJSON, exportAsCSV, downloadFile } from '../../utils/export';
+import { capture } from '../../analytics/posthog';
+import { Events } from '../../analytics/events';
 
 interface ExportPanelViewProps {
   count: number;
@@ -56,12 +58,14 @@ export function ExportPanel() {
     const receipts = await getAllReceipts();
     const content = exportAsJSON(receipts);
     downloadFile(content, 'matcha-receipts.json', 'application/json');
+    capture(Events.EXPORT_TRIGGERED, { format: 'json', receipt_count: receipts.length });
   };
 
   const handleExportCSV = async () => {
     const receipts = await getAllReceipts();
     const content = exportAsCSV(receipts);
     downloadFile(content, 'matcha-receipts.csv', 'text/csv');
+    capture(Events.EXPORT_TRIGGERED, { format: 'csv', receipt_count: receipts.length });
   };
 
   return (

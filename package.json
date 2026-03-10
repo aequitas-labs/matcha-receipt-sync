@@ -28,6 +28,7 @@
     "css-loader": "^7.1.2",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
+    "happy-dom": "^16.0.0",
     "postcss": "^8.5.8",
     "postcss-loader": "^8.2.1",
     "prettier": "^3.8.1",
@@ -38,12 +39,12 @@
     "ts-loader": "^9.5.1",
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.56.1",
-    "webpack": "^5.97.1",
-    "webpack-cli": "^6.0.1",
     "vitest": "^3.0.0",
-    "happy-dom": "^16.0.0"
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "posthog-js": "^1.360.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

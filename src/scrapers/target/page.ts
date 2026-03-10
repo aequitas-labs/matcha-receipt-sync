@@ -8,6 +8,8 @@ import {
   decodeHtmlEntities,
   mapTargetInvoiceLines,
   mapTargetStoreLines,
+  normalizeDpci,
+  parseTargetReceiptHtml,
   type TargetOrderLine,
 } from './parser';
 
@@ -17,6 +19,7 @@ const ORDER_HISTORY_URL =
 const INVOICES_URL = 'https://api.target.com/post_order_invoices/v1/orders';
 const STORE_ORDER_DETAILS_URL =
   'https://api.target.com/guest_order_aggregations/v1';
+const RECEIPT_INVOICE_URL = 'https://api.target.com/receipts/v1/invoice';
 
 interface TargetOrder {
   placed_date: string;
@@ -243,10 +246,30 @@ async function fetchStoreOrderDetails(
     const totalTax = parseFloat(data.summary?.total_taxes) || 0;
     const grandTotal = parseFloat(data.summary?.grand_total) || 0;
 
-    const items = mapTargetStoreLines(orderLines, {
-      total: grandTotal,
-      tax: totalTax,
-    });
+    // Fetch HTML receipt to get per-item taxability flags
+    let taxable: boolean[] | undefined;
+    const htmlReceiptText = await fetchStoreReceiptHtml(
+      headers,
+      storeReceiptId
+    );
+    if (htmlReceiptText) {
+      const htmlReceipt = parseTargetReceiptHtml(htmlReceiptText);
+      const taxFlagMap = new Map<string, boolean>();
+      for (const htmlItem of htmlReceipt.items) {
+        taxFlagMap.set(htmlItem.dpci, htmlItem.taxFlag.includes('T'));
+      }
+      taxable = orderLines.map((line) => {
+        const dpci = (line as { item: { dpci?: string } }).item?.dpci;
+        if (!dpci) return true; // unknown → assume taxable (conservative)
+        return taxFlagMap.get(normalizeDpci(dpci)) ?? true;
+      });
+    }
+
+    const items = mapTargetStoreLines(
+      orderLines,
+      { total: grandTotal, tax: totalTax },
+      taxable ? { taxable } : undefined
+    );
     const storeName = data.address?.[0]?.first_name;
 
     return {
@@ -262,6 +285,38 @@ async function fetchStoreOrderDetails(
   } catch (err) {
     console.warn(
       `[matcha] Target MAIN: store order details error for ${storeReceiptId}:`,
+      err
+    );
+    return null;
+  }
+}
+
+async function fetchStoreReceiptHtml(
+  headers: Record<string, string>,
+  storeReceiptId: string
+): Promise<string | null> {
+  try {
+    const receiptId = storeReceiptId.replace(/-/g, '');
+    const resp = await fetch(RECEIPT_INVOICE_URL, {
+      method: 'POST',
+      headers: { ...headers, 'content-type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        receipt_name: 'Guest Sale Receipt',
+        receipt_id: receiptId,
+        printer_type: 'html',
+      }),
+    });
+    if (!resp.ok) {
+      console.warn(
+        `[matcha] Target MAIN: HTML receipt for ${storeReceiptId} returned ${resp.status}`
+      );
+      return null;
+    }
+    return await resp.text();
+  } catch (err) {
+    console.warn(
+      `[matcha] Target MAIN: HTML receipt error for ${storeReceiptId}:`,
       err
     );
     return null;

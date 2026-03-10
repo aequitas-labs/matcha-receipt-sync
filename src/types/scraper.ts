@@ -16,6 +16,13 @@ export interface ScrapeContext {
   cursor?: SyncCursor;
 }
 
+export interface PaymentMethod {
+  /** Human-readable card/wallet type (e.g. "Visa", "Mastercard", "PayPal") */
+  type: string;
+  /** Last 4 digits of the card, if available */
+  last4?: string;
+}
+
 export interface ScrapedReceipt {
   retailer: string;
   orderId: string;
@@ -26,6 +33,8 @@ export interface ScrapedReceipt {
   tax?: number;
   /** URL to view the order on the retailer's site */
   orderUrl?: string;
+  /** Payment method(s) used for this order */
+  paymentMethods?: PaymentMethod[];
   items: ScrapedItem[];
   rawData?: unknown;
 }

@@ -3,12 +3,34 @@ import { RETAILER_TAB_CONFIG } from '../scrapers/config';
 import { SyncOrchestrator } from './sync-orchestrator';
 import { AlarmManager } from './alarm-manager';
 import { getDebugLog, clearDebugLog } from '../debug/logger';
+import { capture } from '../analytics/posthog';
+import { tryIdentify } from '../analytics/identify';
+import { Events } from '../analytics/events';
 import type { ExtensionMessage } from '../types/messages';
 
 const registry = new ScraperRegistry();
 const orchestrator = new SyncOrchestrator(registry);
 
 console.log('[matcha] Service worker started');
+
+// Track sync start times for duration measurement
+const syncStartTimes = new Map<string, number>();
+
+// Identify user on startup
+tryIdentify().catch(() => {});
+
+// Track install/update events
+chrome.runtime.onInstalled.addListener((details) => {
+  const version = chrome.runtime.getManifest().version;
+  if (details.reason === 'install') {
+    capture(Events.EXTENSION_INSTALLED, { version });
+  } else if (details.reason === 'update') {
+    capture(Events.EXTENSION_UPDATED, {
+      version,
+      previous_version: details.previousVersion,
+    });
+  }
+});
 
 // Track tabs we opened so we can close them after scraping
 const autoOpenedTabs = new Set<number>();
@@ -44,6 +66,7 @@ async function triggerDomScrapers(): Promise<void> {
       if (tab.id) {
         autoOpenedTabs.add(tab.id);
       }
+      syncStartTimes.set(retailerId, Date.now());
     } catch (err) {
       console.warn(`[matcha] Failed to trigger ${retailerId}:`, err);
     }
@@ -51,7 +74,11 @@ async function triggerDomScrapers(): Promise<void> {
 }
 
 // Initialize alarms — fires triggerDomScrapers on schedule
-const alarmManager = new AlarmManager(() => triggerDomScrapers());
+const alarmManager = new AlarmManager(async () => {
+  const enabled = await getEnabledRetailers();
+  capture(Events.SYNC_STARTED, { trigger: 'scheduled', retailer_ids: [...enabled] });
+  return triggerDomScrapers();
+});
 alarmManager.initialize().catch(console.error);
 
 /** Open a fresh tab for a single retailer */
@@ -69,6 +96,7 @@ async function triggerSingleRetailer(retailerId: string): Promise<void> {
   if (tab.id) {
     autoOpenedTabs.add(tab.id);
   }
+  syncStartTimes.set(retailerId, Date.now());
 }
 
 // Debug: log when auto-opened tabs finish loading (to catch redirects)
@@ -111,8 +139,16 @@ chrome.runtime.onMessage.addListener(
       sender.tab?.url
     );
     switch (message.type) {
-      case 'SCRAPE_COMPLETE':
+      case 'SCRAPE_COMPLETE': {
         closeIfAutoOpened(sender);
+        const startTime = syncStartTimes.get(message.retailerId);
+        syncStartTimes.delete(message.retailerId);
+        const durationMs = startTime ? Date.now() - startTime : 0;
+        capture(Events.SYNC_COMPLETED, {
+          retailer_id: message.retailerId,
+          receipt_count: message.receipts.length,
+          duration_ms: durationMs,
+        });
         updateSyncProgress(message.retailerId, { phase: 'pushing', current: 0, total: 0, message: 'Saving to matcha...' });
         orchestrator
           .handleScrapedReceipts(message.retailerId, message.receipts)
@@ -122,30 +158,49 @@ chrome.runtime.onMessage.addListener(
           })
           .catch((err) => {
             updateSyncProgress(message.retailerId, null);
+            capture(Events.SYNC_ERROR, {
+              retailer_id: message.retailerId,
+              error_message: String(err),
+              error_type: 'api',
+            });
             console.error(`[matcha] Scrape processing error:`, err);
             sendResponse({ success: false, error: String(err) });
           });
         return true;
+      }
 
-      case 'SCRAPE_ERROR':
+      case 'SCRAPE_ERROR': {
         closeIfAutoOpened(sender);
+        syncStartTimes.delete(message.retailerId);
+        const errorType = /timeout/i.test(message.error) ? 'timeout' : 'scrape';
+        capture(Events.SYNC_ERROR, {
+          retailer_id: message.retailerId,
+          error_message: message.error,
+          error_type: errorType,
+        });
         updateSyncProgress(message.retailerId, null);
         orchestrator
           .recordError(message.retailerId, message.error)
           .catch(console.error);
         break;
+      }
 
       case 'SYNC_PROGRESS':
         updateSyncProgress(message.retailerId, message.progress);
         break;
 
       case 'MANUAL_SYNC_REQUEST':
+        getEnabledRetailers().then((enabled) => {
+          capture(Events.SYNC_STARTED, { trigger: 'manual_all', retailer_ids: [...enabled] });
+          tryIdentify().catch(() => {});
+        });
         triggerDomScrapers()
           .then(() => sendResponse({ success: true }))
           .catch((err) => sendResponse({ success: false, error: String(err) }));
         return true;
 
       case 'SYNC_RETAILER_REQUEST':
+        capture(Events.SYNC_STARTED, { trigger: 'manual_single', retailer_ids: [message.retailerId] });
         triggerSingleRetailer(message.retailerId)
           .then(() => sendResponse({ success: true }))
           .catch((err: unknown) =>

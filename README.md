@@ -62,7 +62,19 @@ src/
 
 This project is licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
-## Roadmap
+## Exported Item Fields
 
-- [ ] Telemetry for stats + errors
-- [ ] Effective math per item
+Each scraped receipt includes an `items` array. Every item has:
+
+| Field            | Type     | Description                                                                                                                                                                                                                    |
+| ---------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`           | `string` | Item description                                                                                                                                                                                                               |
+| `quantity`       | `number` | Number of units purchased                                                                                                                                                                                                      |
+| `unitPrice`      | `number` | Pre-tax price per unit                                                                                                                                                                                                         |
+| `totalPrice`     | `number` | Line total (unitPrice × quantity, after item-level discounts)                                                                                                                                                                  |
+| `effectivePrice` | `number` | Per-unit cost including this item's proportional share of receipt-level tax and shipping. Always rounded to 2 decimal places; the last item absorbs any rounding remainder so the sum reconciles exactly to the receipt total. |
+
+**Tax attribution by retailer:**
+
+- **Costco in-store**: per-item `taxFlag` (`Y`/`N`) is used — tax is allocated only to taxable items
+- **All others**: tax and shipping are distributed proportionally by `totalPrice / subtotal`

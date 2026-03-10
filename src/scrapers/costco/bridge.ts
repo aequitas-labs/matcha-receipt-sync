@@ -162,17 +162,27 @@ async function run(): Promise<void> {
   }
 
   const receipts = (result.receipts ?? []) as Array<{
-    transactionBarcode: string;
-    transactionDateTime: string;
+    type: 'store' | 'online';
+    // store fields
+    transactionBarcode?: string;
+    transactionDateTime?: string;
+    subTotal?: number;
+    taxes?: number;
+    warehouseName?: string;
+    tenderArray?: Array<{ tenderDescription: string; displayAccountNumber?: string }>;
+    // online fields
+    orderNumber?: string;
+    orderDate?: string;
+    shipping?: number;
+    orderPayment?: Array<{ paymentType: string; cardNumber?: string }>;
+    // common
     total: number;
-    subTotal: number;
-    taxes: number;
-    warehouseName: string;
     items: Array<{
       name: string;
       quantity: number;
       unitPrice: number;
       totalPrice: number;
+      effectivePrice?: number;
     }>;
   }>;
 
@@ -182,11 +192,12 @@ async function run(): Promise<void> {
 
   const mapped = receipts.map((r) => ({
     retailer: RETAILER_ID,
-    orderId: r.transactionBarcode,
-    orderDate: new Date(r.transactionDateTime),
+    orderId: r.type === 'online' ? (r.orderNumber ?? '') : (r.transactionBarcode ?? ''),
+    orderDate: new Date(r.type === 'online' ? (r.orderDate ?? '') : (r.transactionDateTime ?? '')),
     totalAmount: r.total,
     tax: r.taxes || undefined,
     orderUrl: 'https://www.costco.com/OrderStatusCmd',
+    paymentMethods: extractPaymentMethods(r),
     items: r.items,
     rawData: {
       subTotal: r.subTotal,
@@ -204,6 +215,27 @@ async function run(): Promise<void> {
     const since = syncFrom ? ` since ${formatShortDate(syncFrom)}` : '';
     showToast(`No new Costco orders${since}`, 'info');
   }
+}
+
+function extractPaymentMethods(r: {
+  tenderArray?: Array<{ tenderDescription: string; displayAccountNumber?: string }>;
+  orderPayment?: Array<{ paymentType: string; cardNumber?: string }>;
+}): Array<{ type: string; last4?: string }> {
+  if (r.tenderArray && r.tenderArray.length > 0) {
+    return r.tenderArray.map((t) => ({
+      type: t.tenderDescription,
+      last4: t.displayAccountNumber && t.displayAccountNumber !== 'XXXX'
+        ? t.displayAccountNumber
+        : undefined,
+    }));
+  }
+  if (r.orderPayment && r.orderPayment.length > 0) {
+    return r.orderPayment.map((p) => ({
+      type: p.paymentType,
+      last4: p.cardNumber && p.cardNumber !== 'XXXX' ? p.cardNumber : undefined,
+    }));
+  }
+  return [];
 }
 
 run();

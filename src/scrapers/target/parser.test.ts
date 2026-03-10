@@ -5,6 +5,7 @@ import {
   decodeHtmlEntities,
   mapTargetInvoiceLines,
   mapTargetStoreLines,
+  normalizeDpci,
   parseTargetReceiptHtml,
   type TargetOrderLine,
   type TargetStoreOrderLine,
@@ -428,6 +429,12 @@ describe(`parseTargetReceiptHtml — fixture ${FIXTURE_STORE_HTML_20260309.file}
     }
   });
 
+  it('tax flags match expected (T=taxable, NF=non-food)', () => {
+    for (let i = 0; i < expected.items.length; i++) {
+      expect(result.items[i].taxFlag).toBe(expected.items[i].taxFlag);
+    }
+  });
+
   it('subtotal matches expected', () => {
     expect(result.subtotal).toBeCloseTo(expected.subtotal, 2);
   });
@@ -586,5 +593,51 @@ describe('parseTargetReceiptHtml (unit)', () => {
     expect(result.items[0].totalPrice).toBe(12.99);
     expect(result.items[0].quantity).toBe(1);
     expect(result.items[0].unitPrice).toBe(12.99);
+    expect(result.items[0].taxFlag).toBe('NF');
+  });
+});
+
+// ─── normalizeDpci ──────────────────────────────────────────────────────────
+
+describe('normalizeDpci', () => {
+  it('strips dashes from DPCI', () => {
+    expect(normalizeDpci('206-06-7033')).toBe('206067033');
+  });
+
+  it('returns already-normalized DPCI unchanged', () => {
+    expect(normalizeDpci('206067033')).toBe('206067033');
+  });
+});
+
+// ─── mapTargetStoreLines with taxable flags ─────────────────────────────────
+
+describe('mapTargetStoreLines with taxable flags', () => {
+  it('distributes tax only to taxable items', () => {
+    const lines: TargetStoreOrderLine[] = [
+      { quantity: 1, item: { description: 'Apparel', unit_price: '20.00', list_price: '20.00' } },
+      { quantity: 1, item: { description: 'Grocery', unit_price: '10.00', list_price: '10.00' } },
+    ];
+    // total=31.20, tax=1.20, subtotal=30, only first item taxable
+    const items = mapTargetStoreLines(
+      lines,
+      { total: 31.2, tax: 1.2 },
+      { taxable: [true, false] }
+    );
+    // nonTaxAmount = 31.20 - 1.20 = 30.00
+    // Apparel: base = 30 * (20/30) = 20, tax = 1.20 * (20/20) = 1.20, effective = 21.20
+    // Grocery: base = 30 * (10/30) = 10, tax = 0, effective = 10.00
+    expect(items[0].effectivePrice).toBeCloseTo(21.2, 2);
+    expect(items[1].effectivePrice).toBeCloseTo(10.0, 2);
+  });
+
+  it('falls back to proportional distribution without taxable flags', () => {
+    const lines: TargetStoreOrderLine[] = [
+      { quantity: 1, item: { description: 'A', unit_price: '20.00', list_price: '20.00' } },
+      { quantity: 1, item: { description: 'B', unit_price: '10.00', list_price: '10.00' } },
+    ];
+    const items = mapTargetStoreLines(lines, { total: 31.2, tax: 1.2 });
+    // Without taxable: proportional across all items
+    expect(items[0].effectivePrice).toBeCloseTo(31.2 * (20 / 30), 2);
+    expect(items[1].effectivePrice).toBeCloseTo(31.2 * (10 / 30), 2);
   });
 });

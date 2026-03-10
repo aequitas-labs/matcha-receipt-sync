@@ -54,7 +54,7 @@ const RECEIPT_DETAIL_QUERY = `
           taxFlag
           itemUnitPriceAmount
         }
-        tenderArray { tenderTypeCode tenderDescription amountTender }
+        tenderArray { tenderTypeCode tenderDescription amountTender displayAccountNumber }
       }
     }
   }
@@ -85,6 +85,10 @@ const ONLINE_DETAIL_QUERY = `
       orderTotal
       uSTaxTotal1
       shippingAndHandling
+      orderPayment {
+        paymentType
+        cardNumber
+      }
       shipToAddress {
         orderLineItems {
           itemDescription
@@ -241,6 +245,7 @@ window.addEventListener('message', async (event) => {
             subTotal: detail.subTotal,
             taxes: detail.taxes,
             warehouseName: detail.warehouseName,
+            tenderArray: detail.tenderArray ?? [],
             items: mapCostcoItems(detail.itemArray ?? [], {
               total: detail.total,
               taxes: detail.taxes ?? 0,
@@ -350,6 +355,7 @@ async function fetchOnlineOrders(
           orderTotal: number;
           uSTaxTotal1?: number;
           shippingAndHandling?: number;
+          orderPayment?: Array<{ paymentType: string; cardNumber?: string }>;
           shipToAddress?: Array<{ orderLineItems?: CostcoOnlineLineItem[] }>;
         }> = detailData.data?.getOrderDetails ?? [];
 
@@ -364,6 +370,7 @@ async function fetchOnlineOrders(
             total: order.orderTotal,
             taxes: order.uSTaxTotal1 ?? 0,
             shipping: order.shippingAndHandling ?? 0,
+            orderPayment: order.orderPayment ?? [],
             items: mapCostcoOnlineItems(lineItems, {
               orderTotal: order.orderTotal,
               tax: order.uSTaxTotal1 ?? 0,

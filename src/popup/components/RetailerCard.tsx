@@ -52,7 +52,7 @@ export function RetailerCard({
         <StatusDot variant={dotVariant} />
         <div className="ml-auto flex items-center gap-2">
           {hasSynced && (
-            <Badge variant="muted">{status!.transactionCount} txns</Badge>
+            <Badge variant="muted">{status!.transactionCount} receipts</Badge>
           )}
           <Button
             variant="ghost"
