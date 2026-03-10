@@ -61,7 +61,22 @@ const config = {
   ],
 
   optimization: {
-    splitChunks: false,
+    splitChunks: {
+      // Only split the popup entry — service worker and content scripts must remain self-contained
+      chunks: (chunk) => chunk.name === 'popup',
+      cacheGroups: {
+        analytics: {
+          test: /[\\/]node_modules[\\/]posthog-js[\\/]/,
+          name: 'popup-analytics',
+          priority: 20,
+        },
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'popup-vendor',
+          priority: 10,
+        },
+      },
+    },
   },
 };
 

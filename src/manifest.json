@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "matcha money receipt sync",
-  "version": "0.7.0",
-  "description": "Sync receipts from Amazon, Costco, Walmart, and Target to matcha money.",
+  "version": "0.8.0",
+  "description": "Sync and export receipts from Amazon, Costco, Walmart, and Target. Powered by matcha money, a flexible family finance platform. Develop your ritual forfinancial wellness.",
   "permissions": ["storage", "alarms", "cookies", "scripting", "tabs"],
   "host_permissions": [
     "https://www.amazon.com/*",

@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { Header } from './Header';
 import { ConnectionStatus } from './ConnectionStatus';
 import { UpsellBanner } from './UpsellBanner';
 import { RetailerList } from './RetailerList';
 import { SyncButton } from './SyncButton';
 import { ExportPanel } from './ExportPanel';
-import { SettingsPanel } from './SettingsPanel';
-import { RetailerDetail } from './RetailerDetail';
+
+const SettingsPanel = lazy(() => import('./SettingsPanel').then((m) => ({ default: m.SettingsPanel })));
+const RetailerDetail = lazy(() => import('./RetailerDetail').then((m) => ({ default: m.RetailerDetail })));
 import type { SyncStatusMap, SyncProgress } from '../../types/messages';
 import { checkSession } from '../../auth/session';
 import { RETAILERS } from '../constants';
@@ -139,19 +140,23 @@ export function App() {
       />
 
       {view === 'settings' ? (
-        <SettingsPanel
-          useFakeApi={useFakeApi}
-          connected={connected}
-          onBack={() => setView('main')}
-        />
+        <Suspense fallback={null}>
+          <SettingsPanel
+            useFakeApi={useFakeApi}
+            connected={connected}
+            onBack={() => setView('main')}
+          />
+        </Suspense>
       ) : view === 'retailer-detail' && selectedRetailer ? (
-        <RetailerDetail
-          retailerId={selectedRetailer}
-          onBack={() => {
-            setSelectedRetailer(null);
-            setView('main');
-          }}
-        />
+        <Suspense fallback={null}>
+          <RetailerDetail
+            retailerId={selectedRetailer}
+            onBack={() => {
+              setSelectedRetailer(null);
+              setView('main');
+            }}
+          />
+        </Suspense>
       ) : (
         <>
           <ConnectionStatus connected={connected} useFakeApi={useFakeApi} />
