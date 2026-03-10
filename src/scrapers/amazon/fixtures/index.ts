@@ -48,14 +48,15 @@ export const FIXTURE_INVOICE_20260309 = {
   ref: {
     orderId: '114-1259648-4037869',
     orderDate: '2026-03-06T00:00:00.000Z',
-    invoiceUrl: 'https://www.amazon.com/gp/css/summary/print.html?orderID=114-1259648-4037869',
+    invoiceUrl:
+      'https://www.amazon.com/gp/css/summary/print.html?orderID=114-1259648-4037869',
   },
   /** File path relative to this directory */
   file: '20260309.html' as const,
   /** Expected parsed result from parseInvoicePage(html, ref) */
   expected: {
     orderId: '114-1259648-4037869',
-    totalAmount: 7.80,
+    totalAmount: 7.8,
     tax: 0.72,
     items: [
       {

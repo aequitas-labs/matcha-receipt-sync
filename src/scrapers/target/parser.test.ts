@@ -34,7 +34,7 @@ describe('decodeHtmlEntities', () => {
   });
 
   it('decodes &#39; as single quote', () => {
-    expect(decodeHtmlEntities("can&#39;t")).toBe("can't");
+    expect(decodeHtmlEntities('can&#39;t')).toBe("can't");
   });
 
   it('decodes numeric decimal entities', () => {
@@ -73,13 +73,15 @@ describe('decodeHtmlEntities', () => {
 // ─── mapTargetInvoiceLines ───────────────────────────────────────────────────
 
 describe('mapTargetInvoiceLines', () => {
-  const makeLine = (overrides: Partial<TargetOrderLine> = {}): TargetOrderLine => ({
+  const makeLine = (
+    overrides: Partial<TargetOrderLine> = {}
+  ): TargetOrderLine => ({
     description: 'Default Item',
     quantity: 1,
     unit_price: 9.99,
     effective_amount: 9.99,
     sub_total: 9.99,
-    total_tax: 0.80,
+    total_tax: 0.8,
     item: { tcin: '00001', description: 'Default Item' },
     ...overrides,
   });
@@ -123,7 +125,11 @@ describe('mapTargetInvoiceLines', () => {
   it('accumulates tax across multiple lines', () => {
     const lines = [
       makeLine({ total_tax: 0.8 }),
-      makeLine({ description: 'B', total_tax: 0.4, item: { tcin: '2', description: 'B' } }),
+      makeLine({
+        description: 'B',
+        total_tax: 0.4,
+        item: { tcin: '2', description: 'B' },
+      }),
     ];
     const { tax } = mapTargetInvoiceLines(lines);
     expect(tax).toBeCloseTo(1.2, 2);
@@ -173,45 +179,88 @@ describe('mapTargetInvoiceLines', () => {
 // ─── mapTargetStoreLines ─────────────────────────────────────────────────────
 
 describe('mapTargetStoreLines', () => {
-  const makeLine = (overrides: Partial<TargetStoreOrderLine> = {}): TargetStoreOrderLine => ({
+  const makeLine = (
+    overrides: Partial<TargetStoreOrderLine> = {}
+  ): TargetStoreOrderLine => ({
     quantity: 1,
     item: { description: 'Store Item', unit_price: '9.99', list_price: '9.99' },
     ...overrides,
   });
+  const defaultTotals = { total: 9.99, tax: 0 };
 
   it('parses unit_price string correctly', () => {
-    const items = mapTargetStoreLines([makeLine()]);
+    const items = mapTargetStoreLines([makeLine()], defaultTotals);
     expect(items[0].unitPrice).toBe(9.99);
   });
 
   it('calculates totalPrice as unitPrice * qty rounded to 2dp', () => {
-    const items = mapTargetStoreLines([
-      makeLine({ quantity: 3, item: { description: 'Item', unit_price: '3.33', list_price: '3.33' } }),
-    ]);
+    const items = mapTargetStoreLines(
+      [
+        makeLine({
+          quantity: 3,
+          item: { description: 'Item', unit_price: '3.33', list_price: '3.33' },
+        }),
+      ],
+      { total: 9.99, tax: 0 }
+    );
     expect(items[0].totalPrice).toBe(9.99); // 3 * 3.33 = 9.99
   });
 
   it('decodes HTML entities in description', () => {
-    const items = mapTargetStoreLines([
-      makeLine({ item: { description: 'Up&amp;Up', unit_price: '5.00', list_price: '5.00' } }),
-    ]);
+    const items = mapTargetStoreLines(
+      [
+        makeLine({
+          item: {
+            description: 'Up&amp;Up',
+            unit_price: '5.00',
+            list_price: '5.00',
+          },
+        }),
+      ],
+      { total: 5, tax: 0 }
+    );
     expect(items[0].name).toBe('Up&Up');
   });
 
   it('defaults quantity to 1 when 0', () => {
-    const items = mapTargetStoreLines([makeLine({ quantity: 0 })]);
+    const items = mapTargetStoreLines(
+      [makeLine({ quantity: 0 })],
+      defaultTotals
+    );
     expect(items[0].quantity).toBe(1);
   });
 
   it('returns 0 for unparseable unit_price', () => {
-    const items = mapTargetStoreLines([
-      makeLine({ item: { description: 'Item', unit_price: 'N/A', list_price: '' } }),
-    ]);
+    const items = mapTargetStoreLines(
+      [
+        makeLine({
+          item: { description: 'Item', unit_price: 'N/A', list_price: '' },
+        }),
+      ],
+      { total: 0, tax: 0 }
+    );
     expect(items[0].unitPrice).toBe(0);
   });
 
   it('handles empty array', () => {
-    expect(mapTargetStoreLines([])).toHaveLength(0);
+    expect(mapTargetStoreLines([], { total: 0, tax: 0 })).toHaveLength(0);
+  });
+
+  it('computes effectivePrice proportionally when total > subtotal', () => {
+    const lines = [
+      makeLine({
+        quantity: 1,
+        item: { description: 'A', unit_price: '10.00', list_price: '10.00' },
+      }),
+      makeLine({
+        quantity: 1,
+        item: { description: 'B', unit_price: '20.00', list_price: '20.00' },
+      }),
+    ];
+    const items = mapTargetStoreLines(lines, { total: 31.5, tax: 1.5 });
+    // subtotal = 30, total = 31.50
+    expect(items[0].effectivePrice).toBeCloseTo(31.5 * (10 / 30), 2);
+    expect(items[1].effectivePrice).toBeCloseTo(31.5 * (20 / 30), 2);
   });
 });
 
@@ -221,7 +270,10 @@ describe('mapTargetStoreLines', () => {
 
 describe(`mapTargetInvoiceLines — fixture ${FIXTURE_ONLINE_20260309.file}`, () => {
   const data = JSON.parse(
-    readFileSync(join(__dirname, 'fixtures', FIXTURE_ONLINE_20260309.file), 'utf-8')
+    readFileSync(
+      join(__dirname, 'fixtures', FIXTURE_ONLINE_20260309.file),
+      'utf-8'
+    )
   );
   const lines: TargetOrderLine[] = data.lines || data.order_lines || [];
   const { items, tax } = mapTargetInvoiceLines(lines);
@@ -253,6 +305,14 @@ describe(`mapTargetInvoiceLines — fixture ${FIXTURE_ONLINE_20260309.file}`, ()
     expect(tax).toBeCloseTo(expected.tax, 2);
   });
 
+  it('effectivePrice = (effective_amount + total_tax) / quantity (exact per-item)', () => {
+    // 1 item: effective_amount=28.39, total_tax=0, qty=1 → effectivePrice=28.39
+    expect(items[0].effectivePrice).toBeCloseTo(
+      expected.items[0].totalPrice,
+      4
+    );
+  });
+
   it('API call is GET', () => {
     expect(FIXTURE_ONLINE_20260309.api.method).toBe('GET');
   });
@@ -264,10 +324,18 @@ describe(`mapTargetInvoiceLines — fixture ${FIXTURE_ONLINE_20260309.file}`, ()
 
 describe(`mapTargetStoreLines — fixture ${FIXTURE_STORE_JSON_20260309.file}`, () => {
   const data = JSON.parse(
-    readFileSync(join(__dirname, 'fixtures', FIXTURE_STORE_JSON_20260309.file), 'utf-8')
+    readFileSync(
+      join(__dirname, 'fixtures', FIXTURE_STORE_JSON_20260309.file),
+      'utf-8'
+    )
   );
   const orderLines: TargetStoreOrderLine[] = data.order_lines || [];
-  const items = mapTargetStoreLines(orderLines);
+  const grandTotal = parseFloat(data.summary?.grand_total) || 0;
+  const totalTax = parseFloat(data.summary?.total_taxes) || 0;
+  const items = mapTargetStoreLines(orderLines, {
+    total: grandTotal,
+    tax: totalTax,
+  });
   const expected = FIXTURE_STORE_JSON_20260309.expected;
 
   it('extracts the correct number of items', () => {
@@ -299,6 +367,17 @@ describe(`mapTargetStoreLines — fixture ${FIXTURE_STORE_JSON_20260309.file}`, 
     expect(tax).toBeCloseTo(expected.tax, 2);
     expect(total).toBeCloseTo(expected.total, 2);
     expect(storeName).toBe(expected.storeName);
+  });
+
+  it('all items have effectivePrice set', () => {
+    for (const item of items) {
+      expect(item.effectivePrice).toBeDefined();
+    }
+  });
+
+  it('effectivePrice × quantity sums to grand total', () => {
+    const sum = items.reduce((s, i) => s + i.effectivePrice! * i.quantity, 0);
+    expect(sum).toBeCloseTo(expected.total, 1);
   });
 
   it('API call is GET', () => {
@@ -342,7 +421,10 @@ describe(`parseTargetReceiptHtml — fixture ${FIXTURE_STORE_HTML_20260309.file}
 
   it('item total prices match expected', () => {
     for (let i = 0; i < expected.items.length; i++) {
-      expect(result.items[i].totalPrice).toBeCloseTo(expected.items[i].totalPrice, 2);
+      expect(result.items[i].totalPrice).toBeCloseTo(
+        expected.items[i].totalPrice,
+        2
+      );
     }
   });
 
@@ -366,10 +448,15 @@ describe(`parseTargetReceiptHtml — fixture ${FIXTURE_STORE_HTML_20260309.file}
     expect(FIXTURE_STORE_HTML_20260309.api.method).toBe('POST');
     // receipt_id is the store_receipt_id with hyphens removed
     const storeData = JSON.parse(
-      readFileSync(join(__dirname, 'fixtures', FIXTURE_STORE_JSON_20260309.file), 'utf-8')
+      readFileSync(
+        join(__dirname, 'fixtures', FIXTURE_STORE_JSON_20260309.file),
+        'utf-8'
+      )
     );
     const receiptIdNormalized = storeData.store_receipt_id.replace(/-/g, '');
-    expect(FIXTURE_STORE_HTML_20260309.api.body.receipt_id).toBe(receiptIdNormalized);
+    expect(FIXTURE_STORE_HTML_20260309.api.body.receipt_id).toBe(
+      receiptIdNormalized
+    );
   });
 });
 
@@ -378,7 +465,10 @@ describe(`parseTargetReceiptHtml — fixture ${FIXTURE_STORE_HTML_20260309.file}
 
 describe(`order history — fixture ${FIXTURE_ONLINE_ORDER_HISTORY_20260309.file}`, () => {
   const data = JSON.parse(
-    readFileSync(join(__dirname, 'fixtures', FIXTURE_ONLINE_ORDER_HISTORY_20260309.file), 'utf-8')
+    readFileSync(
+      join(__dirname, 'fixtures', FIXTURE_ONLINE_ORDER_HISTORY_20260309.file),
+      'utf-8'
+    )
   );
   const expected = FIXTURE_ONLINE_ORDER_HISTORY_20260309.expected;
 
@@ -408,7 +498,10 @@ describe(`order history — fixture ${FIXTURE_ONLINE_ORDER_HISTORY_20260309.file
 
 describe(`order history — fixture ${FIXTURE_STORE_ORDER_HISTORY_20260309.file}`, () => {
   const data = JSON.parse(
-    readFileSync(join(__dirname, 'fixtures', FIXTURE_STORE_ORDER_HISTORY_20260309.file), 'utf-8')
+    readFileSync(
+      join(__dirname, 'fixtures', FIXTURE_STORE_ORDER_HISTORY_20260309.file),
+      'utf-8'
+    )
   );
   const expected = FIXTURE_STORE_ORDER_HISTORY_20260309.expected;
 
@@ -438,7 +531,10 @@ describe(`order history — fixture ${FIXTURE_STORE_ORDER_HISTORY_20260309.file}
 
 describe(`invoices list — fixture ${FIXTURE_ONLINE_INVOICES_20260309.file}`, () => {
   const data = JSON.parse(
-    readFileSync(join(__dirname, 'fixtures', FIXTURE_ONLINE_INVOICES_20260309.file), 'utf-8')
+    readFileSync(
+      join(__dirname, 'fixtures', FIXTURE_ONLINE_INVOICES_20260309.file),
+      'utf-8'
+    )
   );
   const expected = FIXTURE_ONLINE_INVOICES_20260309.expected;
 
@@ -456,7 +552,10 @@ describe(`invoices list — fixture ${FIXTURE_ONLINE_INVOICES_20260309.file}`, (
   it('invoice id links to order_number from order history', () => {
     // The invoice URL uses the order_number from the order history response
     const onlineHistory = JSON.parse(
-      readFileSync(join(__dirname, 'fixtures', FIXTURE_ONLINE_ORDER_HISTORY_20260309.file), 'utf-8')
+      readFileSync(
+        join(__dirname, 'fixtures', FIXTURE_ONLINE_ORDER_HISTORY_20260309.file),
+        'utf-8'
+      )
     );
     const orderNumber = onlineHistory.orders[0].order_number;
     expect(FIXTURE_ONLINE_INVOICES_20260309.api.url).toContain(orderNumber);
@@ -471,7 +570,9 @@ describe(`invoices list — fixture ${FIXTURE_ONLINE_INVOICES_20260309.file}`, (
 
 describe('parseTargetReceiptHtml (unit)', () => {
   it('returns empty items for HTML with no item rows', () => {
-    const result = parseTargetReceiptHtml('<html><body>No items here</body></html>');
+    const result = parseTargetReceiptHtml(
+      '<html><body>No items here</body></html>'
+    );
     expect(result.items).toHaveLength(0);
     expect(result.total).toBe(0);
   });

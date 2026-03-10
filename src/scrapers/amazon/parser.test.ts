@@ -249,7 +249,10 @@ describe(`parseInvoicePage — fixture ${FIXTURE_INVOICE_20260309.file}`, () => 
 
   it('item prices match expected', () => {
     for (let i = 0; i < expected.items.length; i++) {
-      expect(receipt!.items[i].totalPrice).toBeCloseTo(expected.items[i].totalPrice, 2);
+      expect(receipt!.items[i].totalPrice).toBeCloseTo(
+        expected.items[i].totalPrice,
+        2
+      );
     }
   });
 

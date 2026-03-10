@@ -1,3 +1,5 @@
+import { computeEffectivePrices } from '../../utils/effectivePrice';
+
 export interface WalmartItem {
   name?: string;
   quantity?: number;
@@ -67,8 +69,10 @@ export function parseOrders(
       for (const item of group.items ?? []) {
         if (!item.name) continue;
         const qty = item.quantity ?? 1;
-        const lineTotal = item.linePrice ?? item.totalPrice ?? item.itemPrice ?? 0;
-        const unit = item.unitPrice ?? item.price ?? (qty > 0 ? lineTotal / qty : 0);
+        const lineTotal =
+          item.linePrice ?? item.totalPrice ?? item.itemPrice ?? 0;
+        const unit =
+          item.unitPrice ?? item.price ?? (qty > 0 ? lineTotal / qty : 0);
         items.push({
           name: item.name,
           quantity: qty,
@@ -79,15 +83,17 @@ export function parseOrders(
     }
 
     const subTotal = order.priceDetails?.subTotal?.value;
+    const tax =
+      subTotal != null && total > subTotal
+        ? Math.round((total - subTotal) * 100) / 100
+        : undefined;
+
     receipts.push({
       orderId,
       orderDate: orderDate.toISOString(),
       total,
-      tax:
-        subTotal != null && total > subTotal
-          ? Math.round((total - subTotal) * 100) / 100
-          : undefined,
-      items,
+      tax,
+      items: computeEffectivePrices(items, total),
       rawData: {
         subTotal,
       },

@@ -35,6 +35,8 @@ export interface ScrapedItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  /** Effective per-unit cost including this item's share of tax and shipping */
+  effectivePrice?: number;
 }
 
 export interface SyncCursor {

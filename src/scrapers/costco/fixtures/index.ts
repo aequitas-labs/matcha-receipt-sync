@@ -17,13 +17,16 @@
  *
  *   ONLINE orders:
  *     POST /graphql  query: getOnlineOrders(startDate, endDate, pageNumber, pageSize, warehouseNumber)
+ *       Fields use aliases: sourceOrderNumber→orderNumber, orderedDate→orderPlacedDate
  *       → fixture: 20260309-online-list.json  (order summaries)
  *         → for each order.orderNumber:
  *           POST /graphql  query: getOrderDetails(orderNumbers)
+ *             Fields use alias: orderedDate→orderPlacedDate
  *             → fixture: 20260309-online.json  (mapCostcoOnlineItems)
  */
 
-const GRAPHQL_URL = 'https://ecom-api.costco.com/ebusiness/order/v1/orders/graphql';
+const GRAPHQL_URL =
+  'https://ecom-api.costco.com/ebusiness/order/v1/orders/graphql';
 
 // ─── In-store receipt list fixture ──────────────────────────────────────────
 
@@ -32,7 +35,12 @@ export const FIXTURE_STORE_LIST_20260309 = {
     method: 'POST' as const,
     url: GRAPHQL_URL,
     query: 'receiptsWithCounts',
-    variables: { startDate: '1/01/2026', endDate: '3/31/2026', documentType: 'all', documentSubType: 'all' },
+    variables: {
+      startDate: '1/01/2026',
+      endDate: '3/31/2026',
+      documentType: 'all',
+      documentSubType: 'all',
+    },
   },
   file: '20260309-store-list.json' as const,
   expected: {
@@ -53,7 +61,10 @@ export const FIXTURE_STORE_DETAIL_20260309 = {
     method: 'POST' as const,
     url: GRAPHQL_URL,
     query: 'receiptsWithCounts',
-    variables: { barcode: '21112400701222602041152', documentType: 'warehouse' },
+    variables: {
+      barcode: '21112400701222602041152',
+      documentType: 'warehouse',
+    },
   },
   file: '20260309-store.json' as const,
   /** Expected result from mapCostcoItems(receipt.itemArray) */
@@ -65,10 +76,20 @@ export const FIXTURE_STORE_DETAIL_20260309 = {
     // After discount rollup: 23 raw items → 22 mapped (item 14 is a -$3.50 discount on item 13)
     itemCount: 22,
     // Spot-check a few items
-    firstItem: { name: 'VEG BASE', quantity: 1, unitPrice: 9.49, totalPrice: 9.49 },
+    firstItem: {
+      name: 'VEG BASE',
+      quantity: 1,
+      unitPrice: 9.49,
+      totalPrice: 9.49,
+    },
     // Item 13 (HVR HOMESTYL) had a -$3.50 discount applied from item 14 (/   5354)
     discountedItem: { name: 'HVR HOMESTYL', quantity: 1, totalPrice: 8.99 }, // 12.49 - 3.50
-    lastItem: { name: 'WILD SALMON', quantity: 1, unitPrice: 21.99, totalPrice: 21.99 },
+    lastItem: {
+      name: 'WILD SALMON',
+      quantity: 1,
+      unitPrice: 21.99,
+      totalPrice: 21.99,
+    },
   },
 };
 
@@ -79,7 +100,13 @@ export const FIXTURE_ONLINE_LIST_20260309 = {
     method: 'POST' as const,
     url: GRAPHQL_URL,
     query: 'getOnlineOrders',
-    variables: { pageNumber: 1, pageSize: 10, startDate: '2025-10-01', endDate: '2025-12-31', warehouseNumber: '847' },
+    variables: {
+      pageNumber: 1,
+      pageSize: 10,
+      startDate: '2025-10-01',
+      endDate: '2025-12-31',
+      warehouseNumber: '847',
+    },
   },
   file: '20260309-online-list.json' as const,
   expected: {

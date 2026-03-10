@@ -1,5 +1,5 @@
 import { parseCurrency } from '../../utils/currency';
-import { parseDate } from '../../utils/date';
+import { computeEffectivePrices } from '../../utils/effectivePrice';
 import type { ScrapedReceipt, ScrapedItem } from '../../types/scraper';
 
 export interface InvoiceRef {
@@ -9,7 +9,10 @@ export interface InvoiceRef {
 }
 
 export function stripTags(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 export function parseInvoiceItemsHtml(html: string): ScrapedItem[] {
@@ -21,7 +24,9 @@ export function parseInvoiceItemsHtml(html: string): ScrapedItem[] {
     const name = stripTags(linkMatch[1]).trim();
     if (!name || name.length < 3 || seen.has(name)) continue;
     const after = html.slice(linkMatch.index, linkMatch.index + 5000);
-    const priceMatch = after.match(/class="a-offscreen">\s*\$([\d,]+\.\d{2})\s*</);
+    const priceMatch = after.match(
+      /class="a-offscreen">\s*\$([\d,]+\.\d{2})\s*</
+    );
     if (!priceMatch) continue;
     seen.add(name);
     const price = parseCurrency('$' + priceMatch[1]);
@@ -60,7 +65,10 @@ export function parseInvoiceItemsText(text: string): ScrapedItem[] {
   return items;
 }
 
-export function parseInvoicePage(html: string, ref: InvoiceRef): ScrapedReceipt | null {
+export function parseInvoicePage(
+  html: string,
+  ref: InvoiceRef
+): ScrapedReceipt | null {
   const cleaned = html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '');
@@ -74,14 +82,22 @@ export function parseInvoicePage(html: string, ref: InvoiceRef): ScrapedReceipt 
     return m ? parseCurrency(m[1]) : 0;
   };
   const subtotal = extract(/Item(?:s)?\s+Subtotal\s*:?\s*(\$[\d,]+\.\d{2})/i);
-  const shipping = extract(/Shipping\s+(?:&\s+Handling)?\s*:?\s*(\$[\d,]+\.\d{2})/i);
+  const shipping = extract(
+    /Shipping\s+(?:&\s+Handling)?\s*:?\s*(\$[\d,]+\.\d{2})/i
+  );
   const tax =
-    extract(/Estimated\s+tax\s+to\s+be\s+collected\s*:?\s*(\$[\d,]+\.\d{2})/i) ||
+    extract(
+      /Estimated\s+tax\s+to\s+be\s+collected\s*:?\s*(\$[\d,]+\.\d{2})/i
+    ) ||
     extract(/Tax\s+Collected\s*:?\s*(\$[\d,]+\.\d{2})/i) ||
     extract(/(?:^|[\s.])Tax\s*:?\s*(\$[\d,]+\.\d{2})/i);
   const grandTotal =
     extract(/Grand\s+Total\s*:?\s*(\$[\d,]+\.\d{2})/i) ||
     extract(/Order\s+Total\s*:?\s*(\$[\d,]+\.\d{2})/i);
+
+  const itemsWithEffective = computeEffectivePrices(items, grandTotal, {
+    tax: tax || undefined,
+  });
 
   return {
     retailer: 'amazon',
@@ -90,7 +106,7 @@ export function parseInvoicePage(html: string, ref: InvoiceRef): ScrapedReceipt 
     totalAmount: grandTotal,
     tax: tax || undefined,
     orderUrl: `https://www.amazon.com/gp/your-account/order-details?orderID=${ref.orderId}`,
-    items,
+    items: itemsWithEffective,
     rawData: { subtotal, tax, shipping, grandTotal },
   };
 }

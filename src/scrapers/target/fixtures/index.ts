@@ -101,7 +101,7 @@ export const FIXTURE_STORE_JSON_20260309 = {
     ],
     tax: 2.95,
     total: 70.32,
-    storeName: 'Wheaton',
+    storeName: 'Springfield Target',
   },
 };
 
@@ -123,9 +123,24 @@ export const FIXTURE_STORE_HTML_20260309 = {
   /** Expected parsed result from parseTargetReceiptHtml(html) */
   expected: {
     items: [
-      { name: "Carter's JOY", dpci: '206067033', quantity: 1, totalPrice: 20.0 },
-      { name: "Carter's JOY", dpci: '206067028', quantity: 1, totalPrice: 20.0 },
-      { name: "Carter's JOY", dpci: '206067029', quantity: 1, totalPrice: 20.0 },
+      {
+        name: "Carter's JOY",
+        dpci: '206067033',
+        quantity: 1,
+        totalPrice: 20.0,
+      },
+      {
+        name: "Carter's JOY",
+        dpci: '206067028',
+        quantity: 1,
+        totalPrice: 20.0,
+      },
+      {
+        name: "Carter's JOY",
+        dpci: '206067029',
+        quantity: 1,
+        totalPrice: 20.0,
+      },
       { name: 'FAIRLIFE', dpci: '284061241', quantity: 2, totalPrice: 9.98 },
       { name: 'GG SEAFOOD', dpci: '210070009', quantity: 1, totalPrice: 12.39 },
     ],

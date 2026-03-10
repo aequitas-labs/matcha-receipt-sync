@@ -181,7 +181,7 @@ describe('parseOrders', () => {
             items: [
               { name: 'A', linePrice: 10 },
               { name: 'B', totalPrice: 20 }, // no linePrice
-              { name: 'C', itemPrice: 30 },  // no linePrice or totalPrice
+              { name: 'C', itemPrice: 30 }, // no linePrice or totalPrice
             ],
           },
         ],
@@ -201,9 +201,9 @@ describe('parseOrders', () => {
         groups: [
           {
             items: [
-              { name: 'A', linePrice: 10, unitPrice: 5, quantity: 2 },   // explicit unitPrice
-              { name: 'B', linePrice: 10, price: 4, quantity: 2 },       // price field
-              { name: 'C', linePrice: 10, quantity: 2 },                  // derived from linePrice/qty
+              { name: 'A', linePrice: 10, unitPrice: 5, quantity: 2 }, // explicit unitPrice
+              { name: 'B', linePrice: 10, price: 4, quantity: 2 }, // price field
+              { name: 'C', linePrice: 10, quantity: 2 }, // derived from linePrice/qty
             ],
           },
         ],
@@ -255,10 +255,13 @@ describe(`parseOrders — fixture ${FIXTURE_NEXT_DATA_20260309.file}`, () => {
     join(__dirname, 'fixtures', FIXTURE_NEXT_DATA_20260309.file),
     'utf-8'
   );
-  const scriptMatch = html.match(/<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  const scriptMatch = html.match(
+    /<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/
+  );
   const data = JSON.parse(scriptMatch![1]);
   const orders: WalmartOrder[] =
-    data.props?.pageProps?.phRedesignInitialData?.data?.purchaseHistory?.orders ?? [];
+    data.props?.pageProps?.phRedesignInitialData?.data?.purchaseHistory
+      ?.orders ?? [];
   const expected = FIXTURE_NEXT_DATA_20260309.expected;
 
   it('extracts the correct number of orders from __NEXT_DATA__', () => {
@@ -271,8 +274,14 @@ describe(`parseOrders — fixture ${FIXTURE_NEXT_DATA_20260309.file}`, () => {
   });
 
   it('first order total and subTotal match expected', () => {
-    expect(orders[0].priceDetails?.orderTotal?.value).toBeCloseTo(expected.firstOrder.total, 2);
-    expect(orders[0].priceDetails?.subTotal?.value).toBeCloseTo(expected.firstOrder.subTotal, 2);
+    expect(orders[0].priceDetails?.orderTotal?.value).toBeCloseTo(
+      expected.firstOrder.total,
+      2
+    );
+    expect(orders[0].priceDetails?.subTotal?.value).toBeCloseTo(
+      expected.firstOrder.subTotal,
+      2
+    );
   });
 
   it('parseOrders produces receipts for all orders (no cutoff)', () => {

@@ -61,12 +61,36 @@ export const FIXTURE_ORDER_DETAIL_20260309 = {
     total: 46.29,
     tax: 2.61,
     items: [
-      { name: 'FolkArt Glow-in-the-Dark Acrylic Craft Paint, Matte Finish, Blue, 2 fl oz', quantity: 1, totalPrice: 2.27 },
-      { name: 'The Original Duck Tape Brand Duct Tape, 1.88 in. x 55 yd., Silver', quantity: 1, totalPrice: 3.97 },
-      { name: "Elmer's Liquid School Glue, White, Washable, Great for Making Slime, 1-Quart (32 oz.), Dry time 5 min.", quantity: 1, totalPrice: 8.87 },
-      { name: '100 Sheets Gold Foil Paper Art Gold Foil Sheets Gilding Brush Thin Gold Leaf Sheets Gold Foil Paper Craft for Arts Painting Gilding Crafting Decoration, 5.5 x 5.5 Inches', quantity: 1, totalPrice: 9.99 },
-      { name: 'Yalumo 500 Pieces Pipe Cleaners Craft Supplies, Green Pipe Cleaners Bulk for DIY Crafts, 12 Inch Fuzzy Chenille Stems Sticks Set', quantity: 1, totalPrice: 12.99 },
-      { name: 'BORISCA 6 Pieces Party Curtain Metallic Fringe Curtain, Gold Glitter Birthday Fringe Curtain, Sparkly Fringe Curtains for Photography, Christmas Party, Wedding Party (Gold)', quantity: 1, totalPrice: 5.59 },
+      {
+        name: 'FolkArt Glow-in-the-Dark Acrylic Craft Paint, Matte Finish, Blue, 2 fl oz',
+        quantity: 1,
+        totalPrice: 2.27,
+      },
+      {
+        name: 'The Original Duck Tape Brand Duct Tape, 1.88 in. x 55 yd., Silver',
+        quantity: 1,
+        totalPrice: 3.97,
+      },
+      {
+        name: "Elmer's Liquid School Glue, White, Washable, Great for Making Slime, 1-Quart (32 oz.), Dry time 5 min.",
+        quantity: 1,
+        totalPrice: 8.87,
+      },
+      {
+        name: '100 Sheets Gold Foil Paper Art Gold Foil Sheets Gilding Brush Thin Gold Leaf Sheets Gold Foil Paper Craft for Arts Painting Gilding Crafting Decoration, 5.5 x 5.5 Inches',
+        quantity: 1,
+        totalPrice: 9.99,
+      },
+      {
+        name: 'Yalumo 500 Pieces Pipe Cleaners Craft Supplies, Green Pipe Cleaners Bulk for DIY Crafts, 12 Inch Fuzzy Chenille Stems Sticks Set',
+        quantity: 1,
+        totalPrice: 12.99,
+      },
+      {
+        name: 'BORISCA 6 Pieces Party Curtain Metallic Fringe Curtain, Gold Glitter Birthday Fringe Curtain, Sparkly Fringe Curtains for Photography, Christmas Party, Wedding Party (Gold)',
+        quantity: 1,
+        totalPrice: 5.59,
+      },
     ],
   },
 };

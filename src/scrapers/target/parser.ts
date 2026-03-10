@@ -1,3 +1,4 @@
+import { computeEffectivePrices } from '../../utils/effectivePrice';
 import type { ScrapedItem } from '../../types/scraper';
 
 export interface TargetOrderLine {
@@ -39,15 +40,22 @@ export function mapTargetInvoiceLines(lines: TargetOrderLine[]): {
     const qty = line.quantity || 1;
     const subTotal =
       parseFloat(String(line.effective_amount || line.sub_total)) || 0;
+    const lineTax = parseFloat(String(line.total_tax)) || 0;
     const unitPrice =
       qty > 0
         ? Math.round((subTotal / qty) * 100) / 100
         : parseFloat(String(line.unit_price)) || 0;
+    // Effective price is exact per-item: post-discount amount + item's own tax
+    const effectivePrice =
+      Math.round(((subTotal + lineTax) / qty) * 10000) / 10000;
     return {
-      name: decodeHtmlEntities(line.item?.description || line.description || ''),
+      name: decodeHtmlEntities(
+        line.item?.description || line.description || ''
+      ),
       quantity: qty,
       unitPrice,
       totalPrice: subTotal,
+      effectivePrice,
     };
   });
 
@@ -59,10 +67,16 @@ export function mapTargetInvoiceLines(lines: TargetOrderLine[]): {
   return { items, tax: Math.round(tax * 100) / 100 };
 }
 
+export interface TargetStoreTotals {
+  total: number;
+  tax: number;
+}
+
 export function mapTargetStoreLines(
-  orderLines: TargetStoreOrderLine[]
+  orderLines: TargetStoreOrderLine[],
+  totals: TargetStoreTotals
 ): ScrapedItem[] {
-  return orderLines.map((line) => {
+  const items: ScrapedItem[] = orderLines.map((line) => {
     const qty = line.quantity || 1;
     const unitPrice = parseFloat(line.item.unit_price) || 0;
     return {
@@ -72,6 +86,7 @@ export function mapTargetStoreLines(
       totalPrice: Math.round(unitPrice * qty * 100) / 100,
     };
   });
+  return computeEffectivePrices(items, totals.total, { tax: totals.tax });
 }
 
 export interface TargetReceiptHtmlItem {
@@ -112,7 +127,12 @@ export function parseTargetReceiptHtml(html: string): TargetReceiptHtmlResult {
   // Quantity sub-row within the segment between two items: "2 @ $4.99 ea"
   const qtySubRowPattern = /(\d+)\s*@\s*\$([\d,]+\.\d{2})\s*ea?/i;
 
-  const rawItems: Array<{ dpci: string; name: string; totalPrice: number; index: number }> = [];
+  const rawItems: Array<{
+    dpci: string;
+    name: string;
+    totalPrice: number;
+    index: number;
+  }> = [];
   let m: RegExpExecArray | null;
   while ((m = itemRowPattern.exec(html)) !== null) {
     rawItems.push({
@@ -152,9 +172,13 @@ export function parseTargetReceiptHtml(html: string): TargetReceiptHtmlResult {
 
   const subtotal = extractSummary(/SUBTOTAL[\s\S]*?\$([\d,]+\.\d{2})/i);
   // Discount row has label like "$15 offStorewide", then amount, then a "-" cell
-  const discount = extractSummary(/off[^<]*<\/div>[\s\S]{0,200}\$([\d,]+\.\d{2})&nbsp/i);
+  const discount = extractSummary(
+    /off[^<]*<\/div>[\s\S]{0,200}\$([\d,]+\.\d{2})&nbsp/i
+  );
   // Tax: "T = ... TAX ... on $X.XX" in one cell, "$Y.YY" in the next cell
-  const tax = extractSummary(/T\s*=\s*\w+\s*TAX[\s\S]*?>\$([\d,]+\.\d{2})&nbsp;/i);
+  const tax = extractSummary(
+    /T\s*=\s*\w+\s*TAX[\s\S]*?>\$([\d,]+\.\d{2})&nbsp;/i
+  );
   const total = extractSummary(/>TOTAL<[\s\S]*?\$([\d,]+\.\d{2})/i);
 
   return { items, subtotal, discount, tax, total };

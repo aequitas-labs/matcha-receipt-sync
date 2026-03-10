@@ -18,14 +18,6 @@ const INVOICES_URL = 'https://api.target.com/post_order_invoices/v1/orders';
 const STORE_ORDER_DETAILS_URL =
   'https://api.target.com/guest_order_aggregations/v1';
 
-interface TargetInvoice {
-  id: string;
-  type: string;
-  date: string;
-  total_amount: number;
-  lines: TargetOrderLine[];
-}
-
 interface TargetOrder {
   placed_date: string;
   order_type: string;
@@ -150,13 +142,6 @@ async function fetchOrders(
       const orderDate = new Date(order.placed_date);
       if (orderDate < cutoff) continue;
 
-      // Log first order's keys for debugging
-      if (receipts.length === 0) {
-        const keys = Object.keys(order);
-        console.log('[matcha] Target MAIN: order keys:', keys.join(', '));
-        console.log('[matcha] Target MAIN: sample order:', JSON.stringify(order).slice(0, 2000));
-      }
-
       const rawOrderId = order.order_number;
       const orderId =
         rawOrderId ||
@@ -244,28 +229,24 @@ async function fetchStoreOrderDetails(
       { headers, credentials: 'include' }
     );
     if (!resp.ok) {
-      console.warn(`[matcha] Target MAIN: store detail for ${storeReceiptId} returned ${resp.status}`);
+      console.warn(
+        `[matcha] Target MAIN: store detail for ${storeReceiptId} returned ${resp.status}`
+      );
       return null;
     }
     const data = await resp.json();
-    console.log(
-      `[matcha] Target MAIN: store detail ${storeReceiptId} keys:`,
-      Object.keys(data).join(', ')
-    );
-    console.log(
-      `[matcha] Target MAIN: store detail ${storeReceiptId} raw:`,
-      JSON.stringify(data).slice(0, 3000)
-    );
-
     const orderLines: Array<{
       quantity: number;
       item: { description: string; unit_price: string; list_price: string };
     }> = data.order_lines || [];
 
-    const items = mapTargetStoreLines(orderLines);
-
     const totalTax = parseFloat(data.summary?.total_taxes) || 0;
     const grandTotal = parseFloat(data.summary?.grand_total) || 0;
+
+    const items = mapTargetStoreLines(orderLines, {
+      total: grandTotal,
+      tax: totalTax,
+    });
     const storeName = data.address?.[0]?.first_name;
 
     return {
@@ -314,14 +295,12 @@ async function fetchInvoiceDetails(
       credentials: 'include',
     });
     if (!listResp.ok) {
-      console.warn(`[matcha] Target MAIN: invoice list for ${orderId} returned ${listResp.status}`);
+      console.warn(
+        `[matcha] Target MAIN: invoice list for ${orderId} returned ${listResp.status}`
+      );
       return [];
     }
     const listData = await listResp.json();
-    console.log(
-      `[matcha] Target MAIN: invoice list for ${orderId}:`,
-      JSON.stringify(listData).slice(0, 2000)
-    );
     const invoiceList: Array<{ id: string; amount: number; date: string }> =
       listData.invoices || [];
 
@@ -350,22 +329,14 @@ async function fetchInvoiceDetails(
           }
         );
         if (!detailResp.ok) {
-          console.warn(`[matcha] Target MAIN: invoice detail ${inv.id} returned ${detailResp.status}`);
+          console.warn(
+            `[matcha] Target MAIN: invoice detail ${inv.id} returned ${detailResp.status}`
+          );
           continue;
         }
         const detail = await detailResp.json();
-
-        // Debug: log the raw invoice detail structure
-        console.log(
-          `[matcha] Target MAIN: invoice ${inv.id} keys:`,
-          Object.keys(detail).join(', ')
-        );
-        console.log(
-          `[matcha] Target MAIN: invoice ${inv.id} raw:`,
-          JSON.stringify(detail).slice(0, 3000)
-        );
-
-        const lines: TargetOrderLine[] = detail.lines || detail.order_lines || [];
+        const lines: TargetOrderLine[] =
+          detail.lines || detail.order_lines || [];
         const { items, tax: totalTax } = mapTargetInvoiceLines(lines);
 
         results.push({
