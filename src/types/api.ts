@@ -46,6 +46,8 @@ export interface BatchUpsertReceiptsRequest {
     tax?: number;
     orderUrl?: string;
     paymentMethods?: { type: string; last4?: string }[];
+    /** Schema version of the scraped data. Backend uses this to re-upsert when a higher version arrives. */
+    schemaVersion?: number;
     items: Array<{
       name: string;
       quantity: number;

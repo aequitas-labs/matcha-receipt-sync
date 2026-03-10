@@ -37,6 +37,8 @@ export interface ScrapedReceipt {
   paymentMethods?: PaymentMethod[];
   items: ScrapedItem[];
   rawData?: unknown;
+  /** Schema version stamped at scrape time. Used to detect stale receipts when scraping logic improves. */
+  schemaVersion?: number;
 }
 
 export interface ScrapedItem {

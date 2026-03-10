@@ -5,6 +5,7 @@ import { CursorStore } from './cursor-store';
 import { createApiClient } from '../api/client';
 import { formatDate } from '../utils/date';
 import { saveReceipts, getReceiptsByRetailer } from '../storage/receipts';
+import { getCurrentSchemaVersion } from '../utils/schemaVersion';
 
 export class SyncOrchestrator {
   private cursorStore = new CursorStore();
@@ -44,8 +45,14 @@ export class SyncOrchestrator {
       return;
     }
 
+    // Stamp receipts with the current schema version before persisting
+    const schemaVersion = getCurrentSchemaVersion(retailerId);
+    const stamped = schemaVersion > 0
+      ? receipts.map((r) => ({ ...r, schemaVersion }))
+      : receipts;
+
     // Persist locally before pushing to API
-    await saveReceipts(receipts);
+    await saveReceipts(stamped);
 
     const api = await createApiClient();
     let pushed = 0;
@@ -53,13 +60,15 @@ export class SyncOrchestrator {
 
     try {
       const result = await api.batchUpsertReceipts({
-        receipts: receipts.map((r) => ({
+        receipts: stamped.map((r) => ({
           retailer: r.retailer,
           orderId: r.orderId,
           orderDate: formatDate(r.orderDate),
           totalAmount: r.totalAmount,
           tax: r.tax,
           orderUrl: r.orderUrl,
+          paymentMethods: r.paymentMethods,
+          schemaVersion: r.schemaVersion,
           items: r.items,
         })),
       });
@@ -105,6 +114,20 @@ export class SyncOrchestrator {
       if (!scraper.requiresApiAccess) continue;
 
       console.log(`[matcha] syncApiScrapers: running ${scraper.retailerId}`);
+
+      // Clear cursor if locally-cached receipts pre-date the current schema version
+      const currentVersion = getCurrentSchemaVersion(scraper.retailerId);
+      if (currentVersion > 0) {
+        const existing = await getReceiptsByRetailer(scraper.retailerId);
+        const hasStale = existing.some((r) => (r.schemaVersion ?? 0) < currentVersion);
+        if (hasStale) {
+          await this.cursorStore.clear(scraper.retailerId);
+          console.log(
+            `[matcha] ${scraper.retailerId}: stale schema detected (< v${currentVersion}), cursor cleared for full re-sync`
+          );
+        }
+      }
+
       let cursor = await this.cursorStore.get(scraper.retailerId);
 
       // If no cursor exists, use syncFromDate as initial watermark

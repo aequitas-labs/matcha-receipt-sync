@@ -2,6 +2,8 @@ const path = require('path');
 const webpack = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 
+require('dotenv').config();
+
 /** @type {import('webpack').Configuration} */
 const config = {
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
