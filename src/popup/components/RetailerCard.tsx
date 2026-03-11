@@ -17,7 +17,12 @@ interface RetailerCardProps {
   onClick?: (retailerId: string) => void;
 }
 
-const AUTH_ERROR_PATTERNS = [/log\s*in/i, /session\s*expired/i, /auth\s*token/i, /please\s*sign\s*in/i];
+const AUTH_ERROR_PATTERNS = [
+  /log\s*in/i,
+  /session\s*expired/i,
+  /auth\s*token/i,
+  /please\s*sign\s*in/i,
+];
 
 function isAuthError(error: string | null): boolean {
   if (!error) return false;
@@ -74,17 +79,20 @@ export function RetailerCard({
       {progress ? (
         <div className="mt-1.5">
           <div className="text-xs text-muted-foreground mb-1">
-            {progress.message ?? (progress.phase === 'fetching'
-              ? `${progress.current}/${progress.total} orders`
-              : progress.phase === 'pushing'
-              ? 'Saving to matcha...'
-              : 'Scanning...')}
+            {progress.message ??
+              (progress.phase === 'fetching'
+                ? `${progress.current}/${progress.total} orders`
+                : progress.phase === 'pushing'
+                  ? 'Saving to matcha...'
+                  : 'Scanning...')}
           </div>
           <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
             {progress.phase === 'fetching' && progress.total > 0 ? (
               <div
                 className="h-full bg-primary rounded-full transition-all duration-300"
-                style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }}
+                style={{
+                  width: `${Math.round((progress.current / progress.total) * 100)}%`,
+                }}
               />
             ) : (
               <div className="h-full bg-primary/60 rounded-full animate-pulse w-full" />
@@ -109,7 +117,9 @@ export function RetailerCard({
             <span className="line-clamp-2">{status!.lastError}</span>
             {needsLogin && (
               <button
-                onClick={() => chrome.tabs.create({ url: retailer.url, active: true })}
+                onClick={() =>
+                  chrome.tabs.create({ url: retailer.url, active: true })
+                }
                 className="text-primary hover:underline cursor-pointer mt-0.5 block"
               >
                 Log in to {retailer.name} &rarr;

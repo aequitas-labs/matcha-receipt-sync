@@ -4,13 +4,19 @@
  * Run: node generate-screenshots.js
  */
 
-const { chromium } = require('/Users/chris/matcha/matcha/node_modules/playwright');
+const {
+  chromium,
+} = require('/Users/chris/matcha/matcha/node_modules/playwright');
 const path = require('path');
 const fs = require('fs');
 
 const OUT_DIR = __dirname;
-const ICON_PATH = path.resolve(__dirname, '../extensions/receipt-sync/dist/icons/icon-128.png');
-const ICON_B64 = 'data:image/png;base64,' + fs.readFileSync(ICON_PATH).toString('base64');
+const ICON_PATH = path.resolve(
+  __dirname,
+  '../extensions/receipt-sync/dist/icons/icon-128.png'
+);
+const ICON_B64 =
+  'data:image/png;base64,' + fs.readFileSync(ICON_PATH).toString('base64');
 
 // Brand colors
 const C = {
@@ -130,11 +136,33 @@ const screenshot1Html = `<!DOCTYPE html>
 
       <div class="section-label">Retailers</div>
       ${[
-        { icon: '🛒', name: 'Amazon', count: '142 receipts', time: '2 hours ago' },
-        { icon: '🏪', name: 'Costco', count: '38 receipts',  time: '2 hours ago' },
-        { icon: '🟡', name: 'Walmart', count: '61 receipts', time: '2 hours ago' },
-        { icon: '🎯', name: 'Target',  count: '29 receipts', time: '2 hours ago' },
-      ].map(r => `
+        {
+          icon: '🛒',
+          name: 'Amazon',
+          count: '142 receipts',
+          time: '2 hours ago',
+        },
+        {
+          icon: '🏪',
+          name: 'Costco',
+          count: '38 receipts',
+          time: '2 hours ago',
+        },
+        {
+          icon: '🟡',
+          name: 'Walmart',
+          count: '61 receipts',
+          time: '2 hours ago',
+        },
+        {
+          icon: '🎯',
+          name: 'Target',
+          count: '29 receipts',
+          time: '2 hours ago',
+        },
+      ]
+        .map(
+          (r) => `
       <div class="card">
         <div class="retailer-row">
           <span class="retailer-icon">${r.icon}</span>
@@ -145,7 +173,9 @@ const screenshot1Html = `<!DOCTYPE html>
           </button>
         </div>
         <div class="sync-time mono">Last sync: ${r.time}</div>
-      </div>`).join('')}
+      </div>`
+        )
+        .join('')}
 
       <button class="sync-btn">Sync all retailers</button>
 
@@ -347,7 +377,10 @@ async function render(html, filename) {
   await page.setContent(html, { waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
   const outPath = path.join(OUT_DIR, filename);
-  await page.screenshot({ path: outPath, clip: { x: 0, y: 0, width: 1280, height: 800 } });
+  await page.screenshot({
+    path: outPath,
+    clip: { x: 0, y: 0, width: 1280, height: 800 },
+  });
   await browser.close();
   console.log(`✓ ${filename}`);
 }

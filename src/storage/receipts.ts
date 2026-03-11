@@ -47,7 +47,9 @@ export async function saveReceipts(receipts: ScrapedReceipt[]): Promise<void> {
 export async function getAllReceipts(): Promise<ScrapedReceipt[]> {
   const { [STORAGE_KEY]: store = {} } =
     await chrome.storage.local.get(STORAGE_KEY);
-  return Object.values(store as ReceiptStore).flat().map(deserializeReceipt);
+  return Object.values(store as ReceiptStore)
+    .flat()
+    .map(deserializeReceipt);
 }
 
 export async function getReceiptsByRetailer(

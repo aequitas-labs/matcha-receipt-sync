@@ -22,7 +22,8 @@ async function getSharedDistinctId(): Promise<string> {
 }
 
 /** Detect whether we're running in a service worker (no DOM) */
-const isServiceWorker = typeof window === 'undefined' || typeof document === 'undefined';
+const isServiceWorker =
+  typeof window === 'undefined' || typeof document === 'undefined';
 
 /** Initialize and return the PostHog singleton */
 export async function getPostHog(): Promise<PostHog> {
@@ -69,7 +70,8 @@ export async function capture(
   try {
     // Error events are always sent regardless of opt-out (legitimate interest)
     if (event !== 'sync_error') {
-      const { analyticsEnabled } = await chrome.storage.local.get('analyticsEnabled');
+      const { analyticsEnabled } =
+        await chrome.storage.local.get('analyticsEnabled');
       if (analyticsEnabled === false) return;
     }
     const ph = await getPostHog();

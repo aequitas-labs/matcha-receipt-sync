@@ -11,7 +11,10 @@ import { logRequest } from '../debug/logger';
 const FETCH_TIMEOUT_MS = 30_000;
 
 /** fetch with a 30s timeout — prevents service worker hangs on slow/unresponsive servers. */
-async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit
+): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {

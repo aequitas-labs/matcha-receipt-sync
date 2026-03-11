@@ -30,14 +30,19 @@ interface AmazonProgressMessage {
 
 // ─── Selectors (from selectors.ts) ────────────────────────────────────────────
 
-const ORDER_GROUP = '.js-order-card, [id="orderCard"], .order-card, .a-box-group.order';
-const ORDER_ID_SEL = '.yohtmlc-order-id span[dir="ltr"], .yohtmlc-order-id span:last-child, a[href*="orderID="]';
+const ORDER_GROUP =
+  '.js-order-card, [id="orderCard"], .order-card, .a-box-group.order';
+const ORDER_ID_SEL =
+  '.yohtmlc-order-id span[dir="ltr"], .yohtmlc-order-id span:last-child, a[href*="orderID="]';
 const ORDER_HEADER_ITEM = '.order-header__header-list-item';
 const INVOICE_LINK = 'a[href*="summary/print.html"]';
 
 // ─── Invoice ref collection from DOM ──────────────────────────────────────────
 
-function collectInvoiceUrlsFromDoc(doc: Document, cursorDate?: string): InvoiceRef[] {
+function collectInvoiceUrlsFromDoc(
+  doc: Document,
+  cursorDate?: string
+): InvoiceRef[] {
   const orderGroups = doc.querySelectorAll(ORDER_GROUP);
   const invoices: InvoiceRef[] = [];
   log(`[matcha] Amazon: found ${orderGroups.length} order groups in DOM`);
@@ -49,10 +54,15 @@ function collectInvoiceUrlsFromDoc(doc: Document, cursorDate?: string): InvoiceR
 
       let dateText: string | null = null;
       for (const item of group.querySelectorAll(ORDER_HEADER_ITEM)) {
-        const label = item.querySelector('.a-text-caps')?.textContent?.trim()?.toLowerCase();
+        const label = item
+          .querySelector('.a-text-caps')
+          ?.textContent?.trim()
+          ?.toLowerCase();
         if (label === 'order placed') {
           dateText =
-            item.querySelector('.a-size-base.a-color-secondary:not(.a-text-caps)')?.textContent?.trim() ??
+            item
+              .querySelector('.a-size-base.a-color-secondary:not(.a-text-caps)')
+              ?.textContent?.trim() ??
             item.querySelector('.aok-break-word')?.textContent?.trim() ??
             null;
           break;
@@ -64,11 +74,17 @@ function collectInvoiceUrlsFromDoc(doc: Document, cursorDate?: string): InvoiceR
       if (!orderDate) continue;
       if (cursorDate && orderDate < new Date(cursorDate)) continue;
 
-      const invoiceLink = group.querySelector(INVOICE_LINK) as HTMLAnchorElement | null;
+      const invoiceLink = group.querySelector(
+        INVOICE_LINK
+      ) as HTMLAnchorElement | null;
       if (!invoiceLink?.href) continue;
 
       const cleanOrderId = orderId.replace(/[^a-zA-Z0-9-]/g, '');
-      invoices.push({ orderId: cleanOrderId, orderDate: orderDate.toISOString(), invoiceUrl: invoiceLink.href });
+      invoices.push({
+        orderId: cleanOrderId,
+        orderDate: orderDate.toISOString(),
+        invoiceUrl: invoiceLink.href,
+      });
     } catch {
       // skip malformed order cards
     }
@@ -100,7 +116,10 @@ async function fetchPaginatedInvoiceUrls(
     let html: string;
     try {
       const resp = await fetch(baseUrl.toString());
-      if (!resp.ok) { warn(`[matcha] Amazon page ${page} failed: ${resp.status}`); break; }
+      if (!resp.ok) {
+        warn(`[matcha] Amazon page ${page} failed: ${resp.status}`);
+        break;
+      }
       html = await resp.text();
     } catch (err) {
       warn(`[matcha] Amazon page ${page} error:`, err);
@@ -127,11 +146,17 @@ async function fetchPaginatedInvoiceUrls(
       }
     }
 
-    log(`[matcha] Amazon: page ${page} — ${invoices.length} found, ${newCount} new`);
+    log(
+      `[matcha] Amazon: page ${page} — ${invoices.length} found, ${newCount} new`
+    );
     onProgress(allInvoices.length);
 
     if (allTooOld && invoices.length > 0) break; // past date range
-    if (newCount === 0) { if (++emptyPages >= 2) break; } else { emptyPages = 0; }
+    if (newCount === 0) {
+      if (++emptyPages >= 2) break;
+    } else {
+      emptyPages = 0;
+    }
   }
 
   return allInvoices;
@@ -150,7 +175,10 @@ async function fetchAndParseInvoices(
   async function fetchOne(ref: InvoiceRef): Promise<ScrapedReceipt | null> {
     try {
       const resp = await fetch(ref.invoiceUrl);
-      if (!resp.ok) { warn(`[matcha] Invoice fetch failed ${ref.orderId}: ${resp.status}`); return null; }
+      if (!resp.ok) {
+        warn(`[matcha] Invoice fetch failed ${ref.orderId}: ${resp.status}`);
+        return null;
+      }
       return parseInvoicePage(await resp.text(), ref);
     } catch (err) {
       warn(`[matcha] Invoice error ${ref.orderId}:`, err);
@@ -161,7 +189,9 @@ async function fetchAndParseInvoices(
   for (let i = 0; i < invoices.length; i += CONCURRENCY) {
     const batch = invoices.slice(i, i + CONCURRENCY);
     const results = await Promise.all(batch.map(fetchOne));
-    for (const r of results) { if (r) receipts.push(r); }
+    for (const r of results) {
+      if (r) receipts.push(r);
+    }
     done += batch.length;
     onProgress(done, invoices.length);
   }
@@ -172,15 +202,30 @@ async function fetchAndParseInvoices(
 // ─── Main message handler ──────────────────────────────────────────────────────
 
 window.addEventListener('message', async (event) => {
-  if (event.source !== window || event.data?.type !== 'MATCHA_AMAZON_FETCH') return;
+  if (event.source !== window || event.data?.type !== 'MATCHA_AMAZON_FETCH')
+    return;
   const req = event.data as AmazonFetchMessage;
   const { requestId, startDate, years } = req;
 
-  const postProgress = (msg: Omit<AmazonProgressMessage, 'type' | 'requestId'>) =>
-    window.postMessage({ type: 'MATCHA_AMAZON_PROGRESS', requestId, ...msg } satisfies AmazonProgressMessage, '*');
+  const postProgress = (
+    msg: Omit<AmazonProgressMessage, 'type' | 'requestId'>
+  ) =>
+    window.postMessage(
+      {
+        type: 'MATCHA_AMAZON_PROGRESS',
+        requestId,
+        ...msg,
+      } satisfies AmazonProgressMessage,
+      '*'
+    );
 
   try {
-    postProgress({ phase: 'scanning', current: 0, total: years.length, message: 'Scanning orders...' });
+    postProgress({
+      phase: 'scanning',
+      current: 0,
+      total: years.length,
+      message: 'Scanning orders...',
+    });
 
     // Collect from current page DOM
     const allInvoices = collectInvoiceUrlsFromDoc(document, startDate);
@@ -190,29 +235,56 @@ window.addEventListener('message', async (event) => {
     const yearResults = await Promise.all(
       years.map((year, idx) => {
         const yearUrl = `https://www.amazon.com/your-orders/orders?timeFilter=year-${year}&startIndex=0`;
-        postProgress({ phase: 'scanning', current: idx, total: years.length, message: `Scanning ${year}...` });
+        postProgress({
+          phase: 'scanning',
+          current: idx,
+          total: years.length,
+          message: `Scanning ${year}...`,
+        });
         return fetchPaginatedInvoiceUrls(yearUrl, startDate, () => {});
       })
     );
 
     for (const yearInvoices of yearResults) {
       for (const inv of yearInvoices) {
-        if (!seenIds.has(inv.orderId)) { allInvoices.push(inv); seenIds.add(inv.orderId); }
+        if (!seenIds.has(inv.orderId)) {
+          allInvoices.push(inv);
+          seenIds.add(inv.orderId);
+        }
       }
     }
 
-    postProgress({ phase: 'scanning', current: years.length, total: years.length, message: `Found ${allInvoices.length} orders` });
+    postProgress({
+      phase: 'scanning',
+      current: years.length,
+      total: years.length,
+      message: `Found ${allInvoices.length} orders`,
+    });
     log(`[matcha] Amazon: ${allInvoices.length} total orders to fetch`);
 
     // Fetch invoice detail pages
-    const receipts = await fetchAndParseInvoices(allInvoices, (current, total) => {
-      postProgress({ phase: 'fetching', current, total, message: `${current}/${total} invoices` });
-    });
+    const receipts = await fetchAndParseInvoices(
+      allInvoices,
+      (current, total) => {
+        postProgress({
+          phase: 'fetching',
+          current,
+          total,
+          message: `${current}/${total} invoices`,
+        });
+      }
+    );
 
-    window.postMessage({ type: 'MATCHA_AMAZON_RESULT', requestId, receipts }, '*');
+    window.postMessage(
+      { type: 'MATCHA_AMAZON_RESULT', requestId, receipts },
+      '*'
+    );
   } catch (err) {
     console.error('[matcha] Amazon page script error:', err);
-    window.postMessage({ type: 'MATCHA_AMAZON_RESULT', requestId, error: String(err) }, '*');
+    window.postMessage(
+      { type: 'MATCHA_AMAZON_RESULT', requestId, error: String(err) },
+      '*'
+    );
   }
 });
 

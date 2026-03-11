@@ -23,7 +23,9 @@ function ToastDemo() {
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => showToast('Scanning Amazon orders (page 1)...', 'info')}
+          onClick={() =>
+            showToast('Scanning Amazon orders (page 1)...', 'info')
+          }
         >
           Info
         </Button>
@@ -31,7 +33,10 @@ function ToastDemo() {
           variant="danger"
           size="sm"
           onClick={() =>
-            showToast('Session expired. Please log in to Amazon and try again.', 'error')
+            showToast(
+              'Session expired. Please log in to Amazon and try again.',
+              'error'
+            )
           }
         >
           Error
@@ -61,7 +66,10 @@ function ToastDemo() {
           variant="danger"
           size="sm"
           onClick={() =>
-            showToast('No Costco auth tokens found. Please log in to costco.com first.', 'error')
+            showToast(
+              'No Costco auth tokens found. Please log in to costco.com first.',
+              'error'
+            )
           }
         >
           Auth error

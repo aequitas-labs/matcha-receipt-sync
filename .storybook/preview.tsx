@@ -11,7 +11,8 @@ if (typeof globalThis.chrome === 'undefined') {
     },
     storage: {
       local: {
-        get: (_keys: unknown, cb?: (r: Record<string, unknown>) => void) => cb?.({}),
+        get: (_keys: unknown, cb?: (r: Record<string, unknown>) => void) =>
+          cb?.({}),
         set: (_data: unknown, cb?: () => void) => cb?.(),
         remove: (_keys: unknown, cb?: () => void) => cb?.(),
       },

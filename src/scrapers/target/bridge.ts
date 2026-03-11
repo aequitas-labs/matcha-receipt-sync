@@ -78,9 +78,7 @@ async function run(): Promise<void> {
     }>;
   }>;
 
-  log(
-    `[matcha] Target: received ${receipts.length} receipts from MAIN world`
-  );
+  log(`[matcha] Target: received ${receipts.length} receipts from MAIN world`);
 
   const mapped = receipts.map((r) => {
     let orderUrl: string;

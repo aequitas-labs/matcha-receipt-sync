@@ -6,8 +6,12 @@ import { RetailerList } from './RetailerList';
 import { SyncButton } from './SyncButton';
 import { ExportPanel } from './ExportPanel';
 
-const SettingsPanel = lazy(() => import('./SettingsPanel').then((m) => ({ default: m.SettingsPanel })));
-const RetailerDetail = lazy(() => import('./RetailerDetail').then((m) => ({ default: m.RetailerDetail })));
+const SettingsPanel = lazy(() =>
+  import('./SettingsPanel').then((m) => ({ default: m.SettingsPanel }))
+);
+const RetailerDetail = lazy(() =>
+  import('./RetailerDetail').then((m) => ({ default: m.RetailerDetail }))
+);
 import { OnboardingView } from './OnboardingView';
 import type { SyncStatusMap, SyncProgress } from '../../types/messages';
 import { checkSession } from '../../auth/session';
@@ -18,7 +22,8 @@ type View = 'main' | 'settings' | 'retailer-detail';
 const ALL_RETAILER_IDS = new Set(RETAILERS.map((r) => r.id));
 
 export function App() {
-  const isWindow = new URLSearchParams(window.location.search).get('mode') === 'window';
+  const isWindow =
+    new URLSearchParams(window.location.search).get('mode') === 'window';
   const [firstRun, setFirstRun] = useState<boolean | null>(null);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [status, setStatus] = useState<SyncStatusMap>({});
@@ -27,9 +32,12 @@ export function App() {
     new Set()
   );
   const [useFakeApi, setUseFakeApi] = useState(false);
-  const [syncProgress, setSyncProgress] = useState<Record<string, SyncProgress>>({});
+  const [syncProgress, setSyncProgress] = useState<
+    Record<string, SyncProgress>
+  >({});
   const [view, setView] = useState<View>('main');
-  const [enabledRetailers, setEnabledRetailers] = useState<Set<string>>(ALL_RETAILER_IDS);
+  const [enabledRetailers, setEnabledRetailers] =
+    useState<Set<string>>(ALL_RETAILER_IDS);
   const [selectedRetailer, setSelectedRetailer] = useState<string | null>(null);
 
   // Detect dark mode from system preference
@@ -42,26 +50,37 @@ export function App() {
   useEffect(() => {
     checkSession().then((s) => setConnected(s.connected));
 
-    chrome.storage.local.get(['useFakeApi', 'enabledRetailers', 'syncingRetailers', 'syncProgress', 'firstRun'], (result) => {
-      setUseFakeApi(result.useFakeApi !== false);
-      setFirstRun(result.firstRun === true);
-      if (result.enabledRetailers) {
-        setEnabledRetailers(new Set(result.enabledRetailers));
+    chrome.storage.local.get(
+      [
+        'useFakeApi',
+        'enabledRetailers',
+        'syncingRetailers',
+        'syncProgress',
+        'firstRun',
+      ],
+      (result) => {
+        setUseFakeApi(result.useFakeApi !== false);
+        setFirstRun(result.firstRun === true);
+        if (result.enabledRetailers) {
+          setEnabledRetailers(new Set(result.enabledRetailers));
+        }
+        if (result.syncingRetailers) {
+          setSyncingRetailers(new Set(result.syncingRetailers));
+        }
+        if (result.syncProgress) {
+          setSyncProgress(result.syncProgress);
+        }
       }
-      if (result.syncingRetailers) {
-        setSyncingRetailers(new Set(result.syncingRetailers));
-      }
-      if (result.syncProgress) {
-        setSyncProgress(result.syncProgress);
-      }
-    });
+    );
 
     refreshStatus();
   }, []);
 
   // Real-time updates from storage changes
   useEffect(() => {
-    const listener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+    const listener = (changes: {
+      [key: string]: chrome.storage.StorageChange;
+    }) => {
       if (changes.syncStatus) {
         setStatus(changes.syncStatus.newValue ?? {});
       }
@@ -76,7 +95,9 @@ export function App() {
         );
       }
       if (changes.syncingRetailers) {
-        const fromStorage = new Set<string>(changes.syncingRetailers.newValue ?? []);
+        const fromStorage = new Set<string>(
+          changes.syncingRetailers.newValue ?? []
+        );
         setSyncingRetailers(fromStorage);
         if (fromStorage.size === 0) {
           setSyncingAll(false);
@@ -98,9 +119,13 @@ export function App() {
   };
 
   // A retailer is "active" if it has sync progress or is in syncingRetailers
-  const isRetailerActive = (id: string) => !!syncProgress[id] || syncingRetailers.has(id);
-  const anyActive = Object.keys(syncProgress).length > 0 || syncingRetailers.size > 0;
-  const activeRetailerIds = [...new Set([...Object.keys(syncProgress), ...syncingRetailers])];
+  const isRetailerActive = (id: string) =>
+    !!syncProgress[id] || syncingRetailers.has(id);
+  const anyActive =
+    Object.keys(syncProgress).length > 0 || syncingRetailers.size > 0;
+  const activeRetailerIds = [
+    ...new Set([...Object.keys(syncProgress), ...syncingRetailers]),
+  ];
 
   const handleSyncAll = () => {
     if (anyActive) return;
@@ -198,7 +223,11 @@ export function App() {
             onRetailerClick={handleRetailerClick}
           />
 
-          <SyncButton loading={syncingAll || anyActive} activeCount={activeRetailerIds.length} onClick={handleSyncAll} />
+          <SyncButton
+            loading={syncingAll || anyActive}
+            activeCount={activeRetailerIds.length}
+            onClick={handleSyncAll}
+          />
           <ExportPanel />
         </>
       )}

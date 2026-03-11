@@ -13,7 +13,12 @@ interface ExportPanelViewProps {
   onExportCSV: () => void;
 }
 
-export function ExportPanelView({ count, exportState, onExportJSON, onExportCSV }: ExportPanelViewProps) {
+export function ExportPanelView({
+  count,
+  exportState,
+  onExportJSON,
+  onExportCSV,
+}: ExportPanelViewProps) {
   return (
     <div className="mb-3">
       <h2 className="font-sans text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -48,7 +53,9 @@ export function ExportPanelView({ count, exportState, onExportJSON, onExportCSV 
         <p className="text-[10px] text-success mt-1">Export downloaded.</p>
       )}
       {exportState === 'error' && (
-        <p className="text-[10px] text-destructive mt-1">Export failed. Please try again.</p>
+        <p className="text-[10px] text-destructive mt-1">
+          Export failed. Please try again.
+        </p>
       )}
     </div>
   );
@@ -56,13 +63,17 @@ export function ExportPanelView({ count, exportState, onExportJSON, onExportCSV 
 
 export function ExportPanel() {
   const [count, setCount] = useState(0);
-  const [exportState, setExportState] = useState<'idle' | 'success' | 'error'>('idle');
+  const [exportState, setExportState] = useState<'idle' | 'success' | 'error'>(
+    'idle'
+  );
 
   useEffect(() => {
     getReceiptCount().then(setCount);
 
     // Re-fetch count when syncs complete (syncStatus updates after each retailer)
-    const listener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+    const listener = (changes: {
+      [key: string]: chrome.storage.StorageChange;
+    }) => {
       if (changes.syncStatus) {
         getReceiptCount().then(setCount);
       }
@@ -75,11 +86,18 @@ export function ExportPanel() {
     try {
       const receipts = await getAllReceipts();
       if (format === 'json') {
-        downloadFile(exportAsJSON(receipts), 'matcha-receipts.json', 'application/json');
+        downloadFile(
+          exportAsJSON(receipts),
+          'matcha-receipts.json',
+          'application/json'
+        );
       } else {
         downloadFile(exportAsCSV(receipts), 'matcha-receipts.csv', 'text/csv');
       }
-      capture(Events.EXPORT_TRIGGERED, { format, receipt_count: receipts.length });
+      capture(Events.EXPORT_TRIGGERED, {
+        format,
+        receipt_count: receipts.length,
+      });
       setExportState('success');
       setTimeout(() => setExportState('idle'), 3000);
     } catch {

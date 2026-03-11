@@ -79,7 +79,9 @@ export function computeEffectivePrices(
   const remainder = round2(round2(totalAmount) - paid);
   if (remainder !== 0) {
     const last = result[result.length - 1];
-    last.effectivePrice = round2(last.effectivePrice! + remainder / last.quantity);
+    last.effectivePrice = round2(
+      last.effectivePrice! + remainder / last.quantity
+    );
   }
 
   return result;

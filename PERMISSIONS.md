@@ -10,12 +10,12 @@ This document explains why each permission and host permission is required by th
 
 ## Permissions
 
-| Permission  | Justification                                                                                                                                                                                       |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `storage`   | Stores sync cursors, cached receipts, user settings (enabled retailers, sync date), and auth tokens in `chrome.storage.local`.                                                                      |
-| `alarms`    | Schedules automatic periodic syncs (daily or weekly) using `chrome.alarms` so syncing runs even when the popup is not open.                                                                         |
-| `cookies`   | Reads the matcha.money session cookie to authenticate API requests that push receipt data to the user's account.                                                                                    |
-| `tabs`      | Opens background tabs to retailer order pages to trigger scraping, and closes them automatically when scraping is complete.                                                                         |
+| Permission | Justification                                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `storage`  | Stores sync cursors, cached receipts, user settings (enabled retailers, sync date), and auth tokens in `chrome.storage.local`. |
+| `alarms`   | Schedules automatic periodic syncs (daily or weekly) using `chrome.alarms` so syncing runs even when the popup is not open.    |
+| `cookies`  | Reads the matcha.money session cookie to authenticate API requests that push receipt data to the user's account.               |
+| `tabs`     | Opens background tabs to retailer order pages to trigger scraping, and closes them automatically when scraping is complete.    |
 
 ## Host Permissions
 

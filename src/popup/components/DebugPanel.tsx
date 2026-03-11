@@ -9,7 +9,11 @@ interface DebugPanelViewProps {
   onClear: () => void;
 }
 
-export function DebugPanelView({ entries, onExpand, onClear }: DebugPanelViewProps) {
+export function DebugPanelView({
+  entries,
+  onExpand,
+  onClear,
+}: DebugPanelViewProps) {
   const [expanded, setExpanded] = useState(false);
 
   const handleToggle = () => {
@@ -106,5 +110,11 @@ export function DebugPanel() {
     setEntries([]);
   };
 
-  return <DebugPanelView entries={entries} onExpand={handleExpand} onClear={handleClear} />;
+  return (
+    <DebugPanelView
+      entries={entries}
+      onExpand={handleExpand}
+      onClear={handleClear}
+    />
+  );
 }

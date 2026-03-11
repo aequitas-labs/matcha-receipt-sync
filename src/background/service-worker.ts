@@ -45,7 +45,8 @@ const autoOpenedTabs = new Set<number>();
  * completes via closeIfAutoOpened().
  */
 async function getEnabledRetailers(): Promise<Set<string>> {
-  const { enabledRetailers } = await chrome.storage.local.get('enabledRetailers');
+  const { enabledRetailers } =
+    await chrome.storage.local.get('enabledRetailers');
   if (enabledRetailers) return new Set(enabledRetailers);
   return new Set(Object.keys(RETAILER_TAB_CONFIG)); // all enabled by default
 }
@@ -63,9 +64,7 @@ async function triggerDomScrapers(): Promise<void> {
       continue;
     }
     try {
-      log(
-        `[matcha] Opening ${retailerId} order page in background tab`
-      );
+      log(`[matcha] Opening ${retailerId} order page in background tab`);
       const tab = await chrome.tabs.create({
         url: config.orderPageUrl,
         active: false,
@@ -83,7 +82,10 @@ async function triggerDomScrapers(): Promise<void> {
 // Initialize alarms — fires triggerDomScrapers on schedule
 const alarmManager = new AlarmManager(async () => {
   const enabled = await getEnabledRetailers();
-  capture(Events.SYNC_STARTED, { trigger: 'scheduled', retailer_ids: [...enabled] });
+  capture(Events.SYNC_STARTED, {
+    trigger: 'scheduled',
+    retailer_ids: [...enabled],
+  });
   return triggerDomScrapers();
 });
 alarmManager.initialize().catch(console.error);
@@ -127,7 +129,12 @@ function closeIfAutoOpened(sender: chrome.runtime.MessageSender): void {
 /** Write sync progress to storage (popup listens via onChanged) */
 async function updateSyncProgress(
   retailerId: string,
-  progress: { phase: string; current: number; total: number; message?: string } | null
+  progress: {
+    phase: string;
+    current: number;
+    total: number;
+    message?: string;
+  } | null
 ): Promise<void> {
   const { syncProgress = {} } = await chrome.storage.local.get('syncProgress');
   if (progress) {
@@ -157,7 +164,12 @@ chrome.runtime.onMessage.addListener(
           receipt_count: message.receipts.length,
           duration_ms: durationMs,
         });
-        updateSyncProgress(message.retailerId, { phase: 'pushing', current: 0, total: 0, message: 'Saving to matcha...' });
+        updateSyncProgress(message.retailerId, {
+          phase: 'pushing',
+          current: 0,
+          total: 0,
+          message: 'Saving to matcha...',
+        });
         orchestrator
           .handleScrapedReceipts(message.retailerId, message.receipts)
           .then(() => {
@@ -200,7 +212,10 @@ chrome.runtime.onMessage.addListener(
 
       case 'MANUAL_SYNC_REQUEST':
         getEnabledRetailers().then((enabled) => {
-          capture(Events.SYNC_STARTED, { trigger: 'manual_all', retailer_ids: [...enabled] });
+          capture(Events.SYNC_STARTED, {
+            trigger: 'manual_all',
+            retailer_ids: [...enabled],
+          });
           tryIdentify().catch(() => {});
         });
         triggerDomScrapers()
@@ -209,7 +224,10 @@ chrome.runtime.onMessage.addListener(
         return true;
 
       case 'SYNC_RETAILER_REQUEST':
-        capture(Events.SYNC_STARTED, { trigger: 'manual_single', retailer_ids: [message.retailerId] });
+        capture(Events.SYNC_STARTED, {
+          trigger: 'manual_single',
+          retailer_ids: [message.retailerId],
+        });
         triggerSingleRetailer(message.retailerId)
           .then(() => sendResponse({ success: true }))
           .catch((err: unknown) =>

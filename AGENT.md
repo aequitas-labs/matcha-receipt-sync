@@ -78,6 +78,7 @@ Uses the **two-world pattern** (MAIN + ISOLATED). The MAIN world script (`page.t
 **Per-item taxability (store orders):**
 
 The JSON store order API provides only a lump-sum `total_taxes`. To distribute tax correctly, the scraper fetches the HTML receipt which has per-item tax flags:
+
 - `T` or `T+` = taxable (any flag containing "T")
 - `NF` = non-food / not taxed
 
@@ -86,6 +87,7 @@ Items are matched between the two APIs by DPCI code (JSON uses dashes `206-06-70
 If the HTML receipt fetch fails, the scraper falls back to proportional tax distribution across all items.
 
 **Parser functions** (`parser.ts`):
+
 - `mapTargetInvoiceLines()` — online orders (per-item tax from API)
 - `mapTargetStoreLines()` — store orders (accepts optional `{ taxable }`)
 - `parseTargetReceiptHtml()` — HTML receipt → items with DPCI, tax flags, prices
@@ -97,6 +99,7 @@ If the HTML receipt fetch fails, the scraper falls back to proportional tax dist
 `computeEffectivePrices(items, total, options?)` distributes discounts and tax across line items to compute a per-unit effective price. Used by Target and Costco scrapers.
 
 Options:
+
 - `tax?: number` — total tax amount to distribute
 - `taxable?: boolean[]` — per-item flags; when provided, tax is distributed only to taxable items (non-taxable items get effective price = their share of the non-tax total)
 

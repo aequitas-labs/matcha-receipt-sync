@@ -18,7 +18,10 @@ const POLL_MS = 500;
 const RETAILER_ID = 'costco';
 
 /** Wait for MAIN world script to signal ready. Returns whether it confirmed a valid token. */
-async function waitForMainReady(): Promise<{ ready: boolean; hasToken: boolean }> {
+async function waitForMainReady(): Promise<{
+  ready: boolean;
+  hasToken: boolean;
+}> {
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       window.removeEventListener('message', handler);
@@ -85,9 +88,7 @@ async function run(): Promise<void> {
     }
   }
 
-  log(
-    '[matcha] Costco: tokens confirmed, requesting receipts via MAIN world'
-  );
+  log('[matcha] Costco: tokens confirmed, requesting receipts via MAIN world');
 
   const syncFrom = await bridge.getSyncFromDate(RETAILER_ID);
   const startDate = syncFrom ? toMDY(syncFrom) : '1/01/2024';
@@ -132,23 +133,36 @@ async function run(): Promise<void> {
     // If the token was stale/expired, retry once after a short delay
     if (/session expired|token/i.test(result.error)) {
       warn('[matcha] Costco: token error, retrying once in 3s...');
-      await new Promise(r => setTimeout(r, 3_000));
+      await new Promise((r) => setTimeout(r, 3_000));
       const retryId = crypto.randomUUID();
-      const retry = await new Promise<{ receipts?: unknown[]; error?: string }>((resolve) => {
-        const timeout = setTimeout(() => {
-          window.removeEventListener('message', retryHandler);
-          resolve({ error: 'Timeout on retry' });
-        }, 60_000);
-        function retryHandler(event: MessageEvent) {
-          if (event.data?.type === 'MATCHA_COSTCO_RESULT' && event.data.requestId === retryId) {
+      const retry = await new Promise<{ receipts?: unknown[]; error?: string }>(
+        (resolve) => {
+          const timeout = setTimeout(() => {
             window.removeEventListener('message', retryHandler);
-            clearTimeout(timeout);
-            resolve(event.data);
+            resolve({ error: 'Timeout on retry' });
+          }, 60_000);
+          function retryHandler(event: MessageEvent) {
+            if (
+              event.data?.type === 'MATCHA_COSTCO_RESULT' &&
+              event.data.requestId === retryId
+            ) {
+              window.removeEventListener('message', retryHandler);
+              clearTimeout(timeout);
+              resolve(event.data);
+            }
           }
+          window.addEventListener('message', retryHandler);
+          window.postMessage(
+            {
+              type: 'MATCHA_COSTCO_FETCH',
+              requestId: retryId,
+              startDate,
+              endDate,
+            },
+            '*'
+          );
         }
-        window.addEventListener('message', retryHandler);
-        window.postMessage({ type: 'MATCHA_COSTCO_FETCH', requestId: retryId, startDate, endDate }, '*');
-      });
+      );
       if (!retry.error) {
         // use retry result going forward
         Object.assign(result, retry);
@@ -170,7 +184,10 @@ async function run(): Promise<void> {
     subTotal?: number;
     taxes?: number;
     warehouseName?: string;
-    tenderArray?: Array<{ tenderDescription: string; displayAccountNumber?: string }>;
+    tenderArray?: Array<{
+      tenderDescription: string;
+      displayAccountNumber?: string;
+    }>;
     // online fields
     orderNumber?: string;
     orderDate?: string;
@@ -187,14 +204,17 @@ async function run(): Promise<void> {
     }>;
   }>;
 
-  log(
-    `[matcha] Costco: received ${receipts.length} receipts from MAIN world`
-  );
+  log(`[matcha] Costco: received ${receipts.length} receipts from MAIN world`);
 
   const mapped = receipts.map((r) => ({
     retailer: RETAILER_ID,
-    orderId: r.type === 'online' ? (r.orderNumber ?? '') : (r.transactionBarcode ?? ''),
-    orderDate: new Date(r.type === 'online' ? (r.orderDate ?? '') : (r.transactionDateTime ?? '')),
+    orderId:
+      r.type === 'online'
+        ? (r.orderNumber ?? '')
+        : (r.transactionBarcode ?? ''),
+    orderDate: new Date(
+      r.type === 'online' ? (r.orderDate ?? '') : (r.transactionDateTime ?? '')
+    ),
     totalAmount: r.total,
     tax: r.taxes || undefined,
     orderUrl: 'https://www.costco.com/OrderStatusCmd',
@@ -219,15 +239,19 @@ async function run(): Promise<void> {
 }
 
 function extractPaymentMethods(r: {
-  tenderArray?: Array<{ tenderDescription: string; displayAccountNumber?: string }>;
+  tenderArray?: Array<{
+    tenderDescription: string;
+    displayAccountNumber?: string;
+  }>;
   orderPayment?: Array<{ paymentType: string; cardNumber?: string }>;
 }): Array<{ type: string; last4?: string }> {
   if (r.tenderArray && r.tenderArray.length > 0) {
     return r.tenderArray.map((t) => ({
       type: t.tenderDescription,
-      last4: t.displayAccountNumber && t.displayAccountNumber !== 'XXXX'
-        ? t.displayAccountNumber
-        : undefined,
+      last4:
+        t.displayAccountNumber && t.displayAccountNumber !== 'XXXX'
+          ? t.displayAccountNumber
+          : undefined,
     }));
   }
   if (r.orderPayment && r.orderPayment.length > 0) {

@@ -81,11 +81,13 @@ export function SettingsPanelView({
             onChange={(e) => onSyncFromDateChange(e.target.value)}
             className="w-full text-xs bg-muted border border-border rounded-md px-2 py-1.5 text-foreground"
           />
-          {syncFromDate && new Date(syncFromDate + 'T00:00:00') > new Date() && (
-            <p className="text-[10px] text-warning mt-1">
-              This date is in the future — no orders will be synced until then.
-            </p>
-          )}
+          {syncFromDate &&
+            new Date(syncFromDate + 'T00:00:00') > new Date() && (
+              <p className="text-[10px] text-warning mt-1">
+                This date is in the future — no orders will be synced until
+                then.
+              </p>
+            )}
           {budgetStartMonth && !syncFromDate && (
             <p className="text-[10px] text-muted-foreground mt-1">
               Using budget start month: {budgetStartMonth}
@@ -121,7 +123,10 @@ export function SettingsPanelView({
           </label>
           <div className="space-y-1.5">
             {RETAILERS.map((r) => (
-              <label key={r.id} className="flex items-center gap-2 cursor-pointer">
+              <label
+                key={r.id}
+                className="flex items-center gap-2 cursor-pointer"
+              >
                 <input
                   type="checkbox"
                   checked={enabledRetailers.has(r.id)}
@@ -223,7 +228,12 @@ export function SettingsPanelView({
             Log transactions locally instead of pushing to matcha money
           </p>
           {devMode && (
-            <Button variant="secondary" size="sm" className="mt-2" onClick={onResetOnboarding}>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="mt-2"
+              onClick={onResetOnboarding}
+            >
               Reset onboarding
             </Button>
           )}
@@ -270,7 +280,11 @@ export function SettingsPanelView({
             Request features or report bugs
           </p>
           <button
-            onClick={() => chrome.tabs.create({ url: 'https://matchamoney.featurebase.app/' })}
+            onClick={() =>
+              chrome.tabs.create({
+                url: 'https://matchamoney.featurebase.app/',
+              })
+            }
             className="text-xs text-primary hover:underline cursor-pointer"
           >
             matchamoney.featurebase.app →
@@ -293,21 +307,36 @@ interface SettingsPanelProps {
 
 const ALL_RETAILER_IDS = RETAILERS.map((r) => r.id);
 
-export function SettingsPanel({ useFakeApi, connected, onBack, onResetOnboarding }: SettingsPanelProps) {
+export function SettingsPanel({
+  useFakeApi,
+  connected,
+  onBack,
+  onResetOnboarding,
+}: SettingsPanelProps) {
   const [syncFromDate, setSyncFromDate] = useState('');
   const [syncInterval, setSyncInterval] = useState(24);
   const [lastMatchaSync, setLastMatchaSync] = useState<string | null>(null);
   const [devMode, setDevMode] = useState(useFakeApi);
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [budgetStartMonth, setBudgetStartMonth] = useState<string | null>(null);
-  const [enabledRetailers, setEnabledRetailers] = useState<Set<string>>(new Set(ALL_RETAILER_IDS));
+  const [enabledRetailers, setEnabledRetailers] = useState<Set<string>>(
+    new Set(ALL_RETAILER_IDS)
+  );
 
   useEffect(() => {
     chrome.storage.local.get(
-      ['syncFromDate', 'lastSuccessfulMatchaSync', 'syncIntervalHours', 'useFakeApi', 'analyticsEnabled', 'enabledRetailers'],
+      [
+        'syncFromDate',
+        'lastSuccessfulMatchaSync',
+        'syncIntervalHours',
+        'useFakeApi',
+        'analyticsEnabled',
+        'enabledRetailers',
+      ],
       (result) => {
         if (result.syncFromDate) setSyncFromDate(result.syncFromDate);
-        if (result.lastSuccessfulMatchaSync) setLastMatchaSync(result.lastSuccessfulMatchaSync);
+        if (result.lastSuccessfulMatchaSync)
+          setLastMatchaSync(result.lastSuccessfulMatchaSync);
         if (result.syncIntervalHours) setSyncInterval(result.syncIntervalHours);
         setDevMode(result.useFakeApi !== false);
         setAnalyticsEnabled(result.analyticsEnabled !== false);
@@ -321,10 +350,14 @@ export function SettingsPanel({ useFakeApi, connected, onBack, onResetOnboarding
 
   const fetchBudgetStartMonth = async () => {
     try {
-      const { useFakeApi: isFake } = await chrome.storage.local.get('useFakeApi');
+      const { useFakeApi: isFake } =
+        await chrome.storage.local.get('useFakeApi');
       if (isFake !== false) return;
-      const { apiBaseUrl = 'https://matcha.money' } = await chrome.storage.local.get('apiBaseUrl');
-      const response = await fetch(`${apiBaseUrl}/api/v1/budget/start-month`, { credentials: 'include' });
+      const { apiBaseUrl = 'https://matcha.money' } =
+        await chrome.storage.local.get('apiBaseUrl');
+      const response = await fetch(`${apiBaseUrl}/api/v1/budget/start-month`, {
+        credentials: 'include',
+      });
       if (response.ok) {
         const data = (await response.json()) as { startMonth: string };
         setBudgetStartMonth(data.startMonth);

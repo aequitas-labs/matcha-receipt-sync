@@ -79,9 +79,7 @@ window.addEventListener('message', async (event) => {
     // Fetch in-store orders (page by page)
     await fetchOrders(headers, 'STORE', req.startDate, receipts);
 
-    log(
-      `[matcha] Target MAIN: found ${receipts.length} total receipts`
-    );
+    log(`[matcha] Target MAIN: found ${receipts.length} total receipts`);
     window.postMessage(
       { type: 'MATCHA_TARGET_RESULT', requestId: req.requestId, receipts },
       '*'
@@ -127,9 +125,7 @@ async function fetchOrders(
 
   while (page <= totalPages) {
     const url = `${ORDER_HISTORY_URL}?page_number=${page}&page_size=${pageSize}&order_purchase_type=${purchaseType}&pending_order=true&shipt_status=true`;
-    log(
-      `[matcha] Target MAIN: fetching ${purchaseType} orders page ${page}`
-    );
+    log(`[matcha] Target MAIN: fetching ${purchaseType} orders page ${page}`);
 
     const resp = await fetch(url, { headers, credentials: 'include' });
     if (!resp.ok) {
@@ -408,19 +404,13 @@ async function fetchInvoiceDetails(
           items,
         });
       } catch (err) {
-        warn(
-          `[matcha] Target MAIN: invoice detail error for ${inv.id}:`,
-          err
-        );
+        warn(`[matcha] Target MAIN: invoice detail error for ${inv.id}:`, err);
       }
     }
 
     return results;
   } catch (err) {
-    warn(
-      `[matcha] Target MAIN: invoice list error for ${orderId}:`,
-      err
-    );
+    warn(`[matcha] Target MAIN: invoice list error for ${orderId}:`, err);
     return [];
   }
 }

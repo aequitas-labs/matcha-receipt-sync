@@ -22,7 +22,10 @@ function waitForMainReady(): Promise<void> {
       resolve();
     }, 8_000);
     function handler(event: MessageEvent) {
-      if (event.source === window && event.data?.type === 'MATCHA_AMAZON_READY') {
+      if (
+        event.source === window &&
+        event.data?.type === 'MATCHA_AMAZON_READY'
+      ) {
         window.removeEventListener('message', handler);
         clearTimeout(timeout);
         resolve();
@@ -44,7 +47,9 @@ async function run(): Promise<void> {
 
   const startDate = await bridge.getSyncFromDate(RETAILER_ID);
   const currentYear = new Date().getFullYear();
-  const syncFromYear = startDate ? new Date(startDate).getFullYear() : currentYear;
+  const syncFromYear = startDate
+    ? new Date(startDate).getFullYear()
+    : currentYear;
   const years: number[] = [];
   for (let y = currentYear; y >= syncFromYear; y--) years.push(y);
 
@@ -53,37 +58,42 @@ async function run(): Promise<void> {
 
   const requestId = crypto.randomUUID();
 
-  const result = await new Promise<{ receipts?: unknown[]; error?: string }>((resolve) => {
-    const TIMEOUT_MS = 180_000; // 3 min — fetching many invoice pages
-    const timeout = setTimeout(() => {
-      window.removeEventListener('message', handler);
-      resolve({ error: 'Timeout waiting for Amazon scrape' });
-    }, TIMEOUT_MS);
-
-    function handler(event: MessageEvent) {
-      const d = event.data;
-      if (event.source !== window) return;
-
-      if (d?.type === 'MATCHA_AMAZON_PROGRESS' && d.requestId === requestId) {
-        const progress: SyncProgress = {
-          phase: d.phase,
-          current: d.current,
-          total: d.total,
-          message: d.message,
-        };
-        bridge.sendSyncProgress(RETAILER_ID, progress);
-        return;
-      }
-
-      if (d?.type === 'MATCHA_AMAZON_RESULT' && d.requestId === requestId) {
+  const result = await new Promise<{ receipts?: unknown[]; error?: string }>(
+    (resolve) => {
+      const TIMEOUT_MS = 180_000; // 3 min — fetching many invoice pages
+      const timeout = setTimeout(() => {
         window.removeEventListener('message', handler);
-        clearTimeout(timeout);
-        resolve(d);
+        resolve({ error: 'Timeout waiting for Amazon scrape' });
+      }, TIMEOUT_MS);
+
+      function handler(event: MessageEvent) {
+        const d = event.data;
+        if (event.source !== window) return;
+
+        if (d?.type === 'MATCHA_AMAZON_PROGRESS' && d.requestId === requestId) {
+          const progress: SyncProgress = {
+            phase: d.phase,
+            current: d.current,
+            total: d.total,
+            message: d.message,
+          };
+          bridge.sendSyncProgress(RETAILER_ID, progress);
+          return;
+        }
+
+        if (d?.type === 'MATCHA_AMAZON_RESULT' && d.requestId === requestId) {
+          window.removeEventListener('message', handler);
+          clearTimeout(timeout);
+          resolve(d);
+        }
       }
+      window.addEventListener('message', handler);
+      window.postMessage(
+        { type: 'MATCHA_AMAZON_FETCH', requestId, startDate, years },
+        '*'
+      );
     }
-    window.addEventListener('message', handler);
-    window.postMessage({ type: 'MATCHA_AMAZON_FETCH', requestId, startDate, years }, '*');
-  });
+  );
 
   if (result.error) {
     console.error('[matcha] Amazon scrape error:', result.error);

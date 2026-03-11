@@ -614,8 +614,22 @@ describe('normalizeDpci', () => {
 describe('mapTargetStoreLines with taxable flags', () => {
   it('distributes tax only to taxable items', () => {
     const lines: TargetStoreOrderLine[] = [
-      { quantity: 1, item: { description: 'Apparel', unit_price: '20.00', list_price: '20.00' } },
-      { quantity: 1, item: { description: 'Grocery', unit_price: '10.00', list_price: '10.00' } },
+      {
+        quantity: 1,
+        item: {
+          description: 'Apparel',
+          unit_price: '20.00',
+          list_price: '20.00',
+        },
+      },
+      {
+        quantity: 1,
+        item: {
+          description: 'Grocery',
+          unit_price: '10.00',
+          list_price: '10.00',
+        },
+      },
     ];
     // total=31.20, tax=1.20, subtotal=30, only first item taxable
     const items = mapTargetStoreLines(
@@ -632,8 +646,14 @@ describe('mapTargetStoreLines with taxable flags', () => {
 
   it('falls back to proportional distribution without taxable flags', () => {
     const lines: TargetStoreOrderLine[] = [
-      { quantity: 1, item: { description: 'A', unit_price: '20.00', list_price: '20.00' } },
-      { quantity: 1, item: { description: 'B', unit_price: '10.00', list_price: '10.00' } },
+      {
+        quantity: 1,
+        item: { description: 'A', unit_price: '20.00', list_price: '20.00' },
+      },
+      {
+        quantity: 1,
+        item: { description: 'B', unit_price: '10.00', list_price: '10.00' },
+      },
     ];
     const items = mapTargetStoreLines(lines, { total: 31.2, tax: 1.2 });
     // Without taxable: proportional across all items

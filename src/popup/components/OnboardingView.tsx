@@ -133,346 +133,358 @@ export function OnboardingViewPresentation({
         onBack={handleBack}
       />
       <div key={step} className="flex-1 overflow-y-auto animate-fade-in">
-      {step === 'welcome' && (
-        <div className="space-y-4">
-          <div className="text-center space-y-2">
-            <h1 className="font-sans text-lg font-bold text-foreground">
-              sync your orders automatically
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              matcha money syncs your receipts from these retailers:
-            </p>
-          </div>
+        {step === 'welcome' && (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <h1 className="font-sans text-lg font-bold text-foreground">
+                sync your orders automatically
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                matcha money syncs your receipts from these retailers:
+              </p>
+            </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            {RETAILERS.map((r) => (
-              <Card key={r.id}>
-                <div className="text-center py-1">
-                  <span className="text-2xl">{r.icon}</span>
-                  <p className="text-xs font-medium text-foreground mt-1">
-                    {r.name}
-                  </p>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          <p className="text-[10px] text-muted-foreground text-center">
-            We collect anonymous usage analytics to improve the product. You can
-            change this in Settings.
-          </p>
-
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => onStepChange('retailers')}
-            >
-              Get started
-            </Button>
-            <button
-              onClick={onSkip}
-              className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer text-center"
-            >
-              Skip setup
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 'retailers' && (
-        <div className="space-y-3">
-          <h2 className="font-sans text-sm font-semibold text-foreground">
-            Which retailers do you use?
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Uncheck any you don't want to sync.
-          </p>
-
-          <div className="space-y-2">
-            {RETAILERS.map((r) => (
-              <Card key={r.id} onClick={() => onRetailerToggle(r.id)}>
-                <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedRetailers.has(r.id)}
-                    onChange={() => onRetailerToggle(r.id)}
-                    className="rounded border-border accent-primary"
-                  />
-                  <span className="text-lg">{r.icon}</span>
-                  <span className="text-xs font-medium text-foreground">
-                    {r.name}
-                  </span>
-                </label>
-              </Card>
-            ))}
-          </div>
-
-          {selectedRetailers.size === 0 && (
-            <p className="text-[10px] text-destructive">
-              Select at least one retailer to continue.
-            </p>
-          )}
-
-          <Button
-            variant="primary"
-            size="md"
-            className="w-full"
-            disabled={selectedRetailers.size === 0}
-            onClick={() => onStepChange('login-check')}
-          >
-            Continue
-          </Button>
-        </div>
-      )}
-
-      {step === 'login-check' && (
-        <div className="space-y-3">
-          <h2 className="font-sans text-sm font-semibold text-foreground">
-            Checking retailer logins...
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Make sure you're logged in so we can access your order history.
-          </p>
-
-          <div className="space-y-2">
-            {[...selectedRetailers].map((id) => {
-              const retailer = RETAILERS.find((r) => r.id === id);
-              if (!retailer) return null;
-              const status = loginStatus[id];
-              return (
-                <Card key={id}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{retailer.icon}</span>
-                      <span className="text-xs font-medium text-foreground">
-                        {retailer.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {status === 'checking' && (
-                        <RefreshCw
-                          size={12}
-                          className="animate-spin text-muted-foreground"
-                        />
-                      )}
-                      {status === 'logged-in' && (
-                        <div className="flex items-center gap-1 text-success">
-                          <Check size={12} />
-                          <span className="text-[10px]">Logged in</span>
-                        </div>
-                      )}
-                      {status === 'not-logged-in' && (
-                        <div className="flex items-center gap-1.5">
-                          <AlertCircle size={12} className="text-destructive" />
-                          <button
-                            onClick={() =>
-                              onOpenUrl(RETAILER_LOGIN_URLS[id] ?? retailer.url)
-                            }
-                            className="text-[10px] text-primary hover:underline cursor-pointer"
-                          >
-                            Log in
-                          </button>
-                        </div>
-                      )}
-                    </div>
+            <div className="grid grid-cols-2 gap-2">
+              {RETAILERS.map((r) => (
+                <Card key={r.id}>
+                  <div className="text-center py-1">
+                    <span className="text-2xl">{r.icon}</span>
+                    <p className="text-xs font-medium text-foreground mt-1">
+                      {r.name}
+                    </p>
                   </div>
                 </Card>
-              );
-            })}
+              ))}
+            </div>
+
+            <p className="text-[10px] text-muted-foreground text-center">
+              We collect anonymous usage analytics to improve the product. You
+              can change this in Settings.
+            </p>
+
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => onStepChange('retailers')}
+              >
+                Get started
+              </Button>
+              <button
+                onClick={onSkip}
+                className="text-[10px] text-muted-foreground hover:text-foreground cursor-pointer text-center"
+              >
+                Skip setup
+              </button>
+            </div>
           </div>
+        )}
 
-          {Object.values(loginStatus).some((s) => s === 'not-logged-in') && (
-            <Button variant="secondary" size="sm" onClick={onLoginRecheck}>
-              <RefreshCw size={12} />
-              Re-check
-            </Button>
-          )}
+        {step === 'retailers' && (
+          <div className="space-y-3">
+            <h2 className="font-sans text-sm font-semibold text-foreground">
+              Which retailers do you use?
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Uncheck any you don't want to sync.
+            </p>
 
-          <p className="text-[10px] text-muted-foreground">
-            You can continue even if not logged in — sync will retry later.
-          </p>
+            <div className="space-y-2">
+              {RETAILERS.map((r) => (
+                <Card key={r.id} onClick={() => onRetailerToggle(r.id)}>
+                  <label className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedRetailers.has(r.id)}
+                      onChange={() => onRetailerToggle(r.id)}
+                      className="rounded border-border accent-primary"
+                    />
+                    <span className="text-lg">{r.icon}</span>
+                    <span className="text-xs font-medium text-foreground">
+                      {r.name}
+                    </span>
+                  </label>
+                </Card>
+              ))}
+            </div>
 
-          <Button
-            variant="primary"
-            size="md"
-            className="w-full"
-            disabled={Object.values(loginStatus).some((s) => s === 'checking')}
-            onClick={() => onStepChange('matcha-check')}
-          >
-            Continue
-          </Button>
-        </div>
-      )}
-
-      {step === 'matcha-check' && (
-        <div className="space-y-3">
-          <h2 className="font-sans text-sm font-semibold text-foreground">
-            matcha money account
-          </h2>
-
-          <Card>
-            {matchaConnected === null ? (
-              <div className="flex items-center gap-2 py-1">
-                <RefreshCw
-                  size={14}
-                  className="animate-spin text-muted-foreground"
-                />
-                <span className="text-xs text-muted-foreground">
-                  Checking connection...
-                </span>
-              </div>
-            ) : matchaConnected ? (
-              <div className="flex items-center gap-1.5 text-success py-1">
-                <Check size={14} />
-                <span className="text-xs">Connected to matcha.money</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  Know exactly where your money goes. matcha money builds your
-                  budget automatically from real bank and purchase data.
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => onOpenUrl('https://matcha.money/sign-up')}
-                  >
-                    Create Account
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => onOpenUrl('https://matcha.money/sign-in')}
-                  >
-                    Log In
-                  </Button>
-                </div>
-                <Button variant="ghost" size="sm" onClick={onMatchaRecheck}>
-                  <RefreshCw size={12} />
-                  Re-check
-                </Button>
-              </div>
-            )}
-          </Card>
-
-          <p className="text-[10px] text-muted-foreground">
-            Without a matcha account, receipts are stored locally only.
-          </p>
-
-          <Button
-            variant="primary"
-            size="md"
-            className="w-full"
-            disabled={matchaConnected === null}
-            onClick={() => onStepChange('sync-date')}
-          >
-            Continue
-          </Button>
-        </div>
-      )}
-
-      {step === 'sync-date' && (
-        <div className="space-y-3">
-          <h2 className="font-sans text-sm font-semibold text-foreground">
-            How far back should we sync?
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            We'll import orders placed after this date.
-          </p>
-
-          <Card>
-            <input
-              type="date"
-              value={syncFromDate}
-              onChange={(e) => onSyncFromDateChange(e.target.value)}
-              className="w-full text-xs bg-muted border border-border rounded-md px-2 py-1.5 text-foreground"
-            />
-            {syncFromDate && new Date(syncFromDate + 'T00:00:00') > new Date() && (
-              <p className="text-[10px] text-warning mt-1.5">
-                This date is in the future — no orders will be synced until then.
+            {selectedRetailers.size === 0 && (
+              <p className="text-[10px] text-destructive">
+                Select at least one retailer to continue.
               </p>
             )}
-            <p className="text-[10px] text-muted-foreground mt-1.5">
-              Default: 1 year ago. Further back = longer first sync.
-            </p>
-          </Card>
 
-          <Button
-            variant="primary"
-            size="md"
-            className="w-full"
-            onClick={() => onStepChange('ready')}
-          >
-            Continue
-          </Button>
-        </div>
-      )}
-
-      {step === 'ready' && (
-        <div className="space-y-3">
-          <h2 className="font-sans text-sm font-semibold text-foreground">
-            You're all set!
-          </h2>
-
-          <Card>
-            <div className="space-y-1.5 text-xs">
-              <div className="flex items-center gap-2">
-                <Check size={12} className="text-success" />
-                <span className="text-foreground">
-                  {selectedRetailers.size} retailer
-                  {selectedRetailers.size !== 1 ? 's' : ''} selected
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {matchaConnected ? (
-                  <Check size={12} className="text-success" />
-                ) : (
-                  <AlertCircle size={12} className="text-muted-foreground" />
-                )}
-                <span className="text-foreground">
-                  {matchaConnected
-                    ? 'Connected to matcha.money'
-                    : 'matcha account not connected'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                {syncFromDate && new Date(syncFromDate + 'T00:00:00') > new Date() ? (
-                  <AlertCircle size={12} className="text-warning" />
-                ) : (
-                  <Check size={12} className="text-success" />
-                )}
-                <span className="text-foreground">
-                  Syncing from {new Date(syncFromDate + 'T00:00:00').toLocaleDateString()}
-                  {syncFromDate && new Date(syncFromDate + 'T00:00:00') > new Date()
-                    ? ' (future)'
-                    : ''}
-                </span>
-              </div>
-            </div>
-          </Card>
-
-          <div className="flex flex-col gap-2">
             <Button
               variant="primary"
               size="md"
               className="w-full"
-              onClick={() => onComplete(true)}
+              disabled={selectedRetailers.size === 0}
+              onClick={() => onStepChange('login-check')}
             >
-              Sync now
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              className="w-full"
-              onClick={() => onComplete(false)}
-            >
-              Do it later
+              Continue
             </Button>
           </div>
-        </div>
-      )}
+        )}
+
+        {step === 'login-check' && (
+          <div className="space-y-3">
+            <h2 className="font-sans text-sm font-semibold text-foreground">
+              Checking retailer logins...
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Make sure you're logged in so we can access your order history.
+            </p>
+
+            <div className="space-y-2">
+              {[...selectedRetailers].map((id) => {
+                const retailer = RETAILERS.find((r) => r.id === id);
+                if (!retailer) return null;
+                const status = loginStatus[id];
+                return (
+                  <Card key={id}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{retailer.icon}</span>
+                        <span className="text-xs font-medium text-foreground">
+                          {retailer.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {status === 'checking' && (
+                          <RefreshCw
+                            size={12}
+                            className="animate-spin text-muted-foreground"
+                          />
+                        )}
+                        {status === 'logged-in' && (
+                          <div className="flex items-center gap-1 text-success">
+                            <Check size={12} />
+                            <span className="text-[10px]">Logged in</span>
+                          </div>
+                        )}
+                        {status === 'not-logged-in' && (
+                          <div className="flex items-center gap-1.5">
+                            <AlertCircle
+                              size={12}
+                              className="text-destructive"
+                            />
+                            <button
+                              onClick={() =>
+                                onOpenUrl(
+                                  RETAILER_LOGIN_URLS[id] ?? retailer.url
+                                )
+                              }
+                              className="text-[10px] text-primary hover:underline cursor-pointer"
+                            >
+                              Log in
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {Object.values(loginStatus).some((s) => s === 'not-logged-in') && (
+              <Button variant="secondary" size="sm" onClick={onLoginRecheck}>
+                <RefreshCw size={12} />
+                Re-check
+              </Button>
+            )}
+
+            <p className="text-[10px] text-muted-foreground">
+              You can continue even if not logged in — sync will retry later.
+            </p>
+
+            <Button
+              variant="primary"
+              size="md"
+              className="w-full"
+              disabled={Object.values(loginStatus).some(
+                (s) => s === 'checking'
+              )}
+              onClick={() => onStepChange('matcha-check')}
+            >
+              Continue
+            </Button>
+          </div>
+        )}
+
+        {step === 'matcha-check' && (
+          <div className="space-y-3">
+            <h2 className="font-sans text-sm font-semibold text-foreground">
+              matcha money account
+            </h2>
+
+            <Card>
+              {matchaConnected === null ? (
+                <div className="flex items-center gap-2 py-1">
+                  <RefreshCw
+                    size={14}
+                    className="animate-spin text-muted-foreground"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    Checking connection...
+                  </span>
+                </div>
+              ) : matchaConnected ? (
+                <div className="flex items-center gap-1.5 text-success py-1">
+                  <Check size={14} />
+                  <span className="text-xs">Connected to matcha.money</span>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    Know exactly where your money goes. matcha money builds your
+                    budget automatically from real bank and purchase data.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => onOpenUrl('https://matcha.money/sign-up')}
+                    >
+                      Create Account
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => onOpenUrl('https://matcha.money/sign-in')}
+                    >
+                      Log In
+                    </Button>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={onMatchaRecheck}>
+                    <RefreshCw size={12} />
+                    Re-check
+                  </Button>
+                </div>
+              )}
+            </Card>
+
+            <p className="text-[10px] text-muted-foreground">
+              Without a matcha account, receipts are stored locally only.
+            </p>
+
+            <Button
+              variant="primary"
+              size="md"
+              className="w-full"
+              disabled={matchaConnected === null}
+              onClick={() => onStepChange('sync-date')}
+            >
+              Continue
+            </Button>
+          </div>
+        )}
+
+        {step === 'sync-date' && (
+          <div className="space-y-3">
+            <h2 className="font-sans text-sm font-semibold text-foreground">
+              How far back should we sync?
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              We'll import orders placed after this date.
+            </p>
+
+            <Card>
+              <input
+                type="date"
+                value={syncFromDate}
+                onChange={(e) => onSyncFromDateChange(e.target.value)}
+                className="w-full text-xs bg-muted border border-border rounded-md px-2 py-1.5 text-foreground"
+              />
+              {syncFromDate &&
+                new Date(syncFromDate + 'T00:00:00') > new Date() && (
+                  <p className="text-[10px] text-warning mt-1.5">
+                    This date is in the future — no orders will be synced until
+                    then.
+                  </p>
+                )}
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                Default: 1 year ago. Further back = longer first sync.
+              </p>
+            </Card>
+
+            <Button
+              variant="primary"
+              size="md"
+              className="w-full"
+              onClick={() => onStepChange('ready')}
+            >
+              Continue
+            </Button>
+          </div>
+        )}
+
+        {step === 'ready' && (
+          <div className="space-y-3">
+            <h2 className="font-sans text-sm font-semibold text-foreground">
+              You're all set!
+            </h2>
+
+            <Card>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center gap-2">
+                  <Check size={12} className="text-success" />
+                  <span className="text-foreground">
+                    {selectedRetailers.size} retailer
+                    {selectedRetailers.size !== 1 ? 's' : ''} selected
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {matchaConnected ? (
+                    <Check size={12} className="text-success" />
+                  ) : (
+                    <AlertCircle size={12} className="text-muted-foreground" />
+                  )}
+                  <span className="text-foreground">
+                    {matchaConnected
+                      ? 'Connected to matcha.money'
+                      : 'matcha account not connected'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {syncFromDate &&
+                  new Date(syncFromDate + 'T00:00:00') > new Date() ? (
+                    <AlertCircle size={12} className="text-warning" />
+                  ) : (
+                    <Check size={12} className="text-success" />
+                  )}
+                  <span className="text-foreground">
+                    Syncing from{' '}
+                    {new Date(syncFromDate + 'T00:00:00').toLocaleDateString()}
+                    {syncFromDate &&
+                    new Date(syncFromDate + 'T00:00:00') > new Date()
+                      ? ' (future)'
+                      : ''}
+                  </span>
+                </div>
+              </div>
+            </Card>
+
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="primary"
+                size="md"
+                className="w-full"
+                onClick={() => onComplete(true)}
+              >
+                Sync now
+              </Button>
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-full"
+                onClick={() => onComplete(false)}
+              >
+                Do it later
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -12,9 +12,11 @@ function item(
 }
 
 function sumPaid(items: ScrapedItem[]): number {
-  return Math.round(
-    items.reduce((s, i) => s + i.effectivePrice! * i.quantity, 0) * 100
-  ) / 100;
+  return (
+    Math.round(
+      items.reduce((s, i) => s + i.effectivePrice! * i.quantity, 0) * 100
+    ) / 100
+  );
 }
 
 // ─── Basic proportional distribution ─────────────────────────────────────────

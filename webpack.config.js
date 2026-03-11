@@ -49,7 +49,9 @@ const config = {
   plugins: [
     new webpack.DefinePlugin({
       POSTHOG_API_KEY: JSON.stringify(process.env.POSTHOG_API_KEY || ''),
-      POSTHOG_HOST: JSON.stringify(process.env.POSTHOG_HOST || 'https://us.i.posthog.com'),
+      POSTHOG_HOST: JSON.stringify(
+        process.env.POSTHOG_HOST || 'https://us.i.posthog.com'
+      ),
     }),
     new CopyPlugin({
       patterns: [

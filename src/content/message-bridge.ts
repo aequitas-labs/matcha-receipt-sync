@@ -33,9 +33,15 @@ export class MessageBridge {
 
   /** Returns the effective start date for a scrape: max(syncFromDate, cursor.lastSyncedAt) */
   async getSyncFromDate(retailerId: string): Promise<string | undefined> {
-    const { syncFromDate, cursors = {} } = await chrome.storage.local.get(['syncFromDate', 'cursors']);
-    const cursor: string | undefined = (cursors[retailerId] as SyncCursor | undefined)?.lastSyncedAt;
-    if (syncFromDate && cursor) return cursor > syncFromDate ? cursor : syncFromDate;
+    const { syncFromDate, cursors = {} } = await chrome.storage.local.get([
+      'syncFromDate',
+      'cursors',
+    ]);
+    const cursor: string | undefined = (
+      cursors[retailerId] as SyncCursor | undefined
+    )?.lastSyncedAt;
+    if (syncFromDate && cursor)
+      return cursor > syncFromDate ? cursor : syncFromDate;
     return cursor ?? syncFromDate ?? undefined;
   }
 }

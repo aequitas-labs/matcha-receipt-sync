@@ -100,9 +100,7 @@ async function run(): Promise<void> {
     rawData?: Record<string, unknown>;
   }>;
 
-  log(
-    `[matcha] Walmart: received ${receipts.length} receipts from MAIN world`
-  );
+  log(`[matcha] Walmart: received ${receipts.length} receipts from MAIN world`);
 
   const mapped = receipts.map((r) => ({
     retailer: RETAILER_ID,

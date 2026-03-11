@@ -1,4 +1,8 @@
-import type { ReceiptScraper, ScrapeContext, ScrapedReceipt } from '../../types/scraper';
+import type {
+  ReceiptScraper,
+  ScrapeContext,
+  ScrapedReceipt,
+} from '../../types/scraper';
 
 export class AmazonScraper implements ReceiptScraper {
   readonly retailerId = 'amazon';

@@ -5,8 +5,12 @@ import { App } from './components/App';
 import { Events } from '../analytics/events';
 
 // Defer analytics so PostHog doesn't block initial render
-import('../analytics/posthog').then(({ capture }) => capture(Events.POPUP_OPENED));
-import('../analytics/identify').then(({ tryIdentify }) => tryIdentify().catch(() => {}));
+import('../analytics/posthog').then(({ capture }) =>
+  capture(Events.POPUP_OPENED)
+);
+import('../analytics/identify').then(({ tryIdentify }) =>
+  tryIdentify().catch(() => {})
+);
 
 const container = document.getElementById('root');
 if (container) {

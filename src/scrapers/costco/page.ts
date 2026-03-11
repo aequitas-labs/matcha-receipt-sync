@@ -216,9 +216,7 @@ window.addEventListener('message', async (event) => {
     const listData = await listResp.json();
     const summaries = listData.data?.receiptsWithCounts?.receipts ?? [];
 
-    log(
-      `[matcha] Costco MAIN: found ${summaries.length} store receipts`
-    );
+    log(`[matcha] Costco MAIN: found ${summaries.length} store receipts`);
 
     for (const summary of summaries) {
       try {
@@ -395,8 +393,11 @@ async function signalReady() {
   const start = Date.now();
   let hasToken = false;
   while (Date.now() - start < MAX_MS) {
-    if (getFreshTokens()) { hasToken = true; break; }
-    await new Promise(r => setTimeout(r, 500));
+    if (getFreshTokens()) {
+      hasToken = true;
+      break;
+    }
+    await new Promise((r) => setTimeout(r, 500));
   }
   window.postMessage({ type: 'MATCHA_COSTCO_READY', hasToken }, '*');
   log(`[matcha] Costco MAIN world script ready (hasToken=${hasToken})`);

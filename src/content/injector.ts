@@ -38,17 +38,11 @@ export async function runContentScript(scraper: ReceiptScraper): Promise<void> {
         `[matcha] Page body snippet (first 500 chars):`,
         document.body?.innerText?.slice(0, 500)
       );
-      showToast(
-        `No orders found on ${scraper.retailerName}`,
-        'info'
-      );
+      showToast(`No orders found on ${scraper.retailerName}`, 'info');
     }
   } catch (err) {
     console.error(`[matcha] ${scraper.retailerName} scrape error:`, err);
     bridge.sendScrapeError(scraper.retailerId, String(err));
-    showToast(
-      `Error scanning ${scraper.retailerName}: ${err}`,
-      'error'
-    );
+    showToast(`Error scanning ${scraper.retailerName}: ${err}`, 'error');
   }
 }

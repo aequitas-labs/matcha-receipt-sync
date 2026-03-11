@@ -119,9 +119,9 @@ function OrderCard({
               <>
                 <span>·</span>
                 <span>
-                  {receipt.paymentMethods.map((p) =>
-                    p.last4 ? `${p.type} ••${p.last4}` : p.type
-                  ).join(', ')}
+                  {receipt.paymentMethods
+                    .map((p) => (p.last4 ? `${p.type} ••${p.last4}` : p.type))
+                    .join(', ')}
                 </span>
               </>
             )}

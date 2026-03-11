@@ -21,10 +21,13 @@ export async function getSessionCookie(): Promise<string | null> {
     try {
       const cookie = await chrome.cookies.get({ url: MATCHA_URL, name });
       if (!cookie) continue;
-      if (cookie.expirationDate && cookie.expirationDate < Date.now() / 1000) continue;
+      if (cookie.expirationDate && cookie.expirationDate < Date.now() / 1000)
+        continue;
       log(`[matcha] session cookie matched: ${name}`);
       return cookie.value;
-    } catch { /* continue */ }
+    } catch {
+      /* continue */
+    }
   }
   return null;
 }

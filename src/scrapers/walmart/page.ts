@@ -75,8 +75,13 @@ function getWalmartHeaders(): Record<string, string> {
  */
 async function fetchOrderDetailItems(
   orderId: string
-): Promise<Map<string, { quantity: number; unitPrice: number; totalPrice: number }>> {
-  const result = new Map<string, { quantity: number; unitPrice: number; totalPrice: number }>();
+): Promise<
+  Map<string, { quantity: number; unitPrice: number; totalPrice: number }>
+> {
+  const result = new Map<
+    string,
+    { quantity: number; unitPrice: number; totalPrice: number }
+  >();
   try {
     const cleanId = orderId.replace(/-/g, '');
     const resp = await fetch(`https://www.walmart.com/orders/${cleanId}`, {
@@ -87,8 +92,10 @@ async function fetchOrderDetailItems(
 
     // HTML parsing: find productName + line-price pairs
     // Each item block has data-testid="productName" and data-testid="line-price"
-    const namePattern = /data-testid="productName"[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/gi;
-    const pricePattern = /data-testid="line-price"[^>]*>[\s\S]*?<span[^>]*>\s*\$([\d,]+\.\d{2})\s*<\/span>/gi;
+    const namePattern =
+      /data-testid="productName"[^>]*>[\s\S]*?<span[^>]*>([\s\S]*?)<\/span>/gi;
+    const pricePattern =
+      /data-testid="line-price"[^>]*>[\s\S]*?<span[^>]*>\s*\$([\d,]+\.\d{2})\s*<\/span>/gi;
     const qtyPattern = /bill-item-quantity[^>]*>[^<]*?Qty\s*(\d+)/gi;
 
     const names: string[] = [];
@@ -113,7 +120,11 @@ async function fetchOrderDetailItems(
       const qty = quantities[i] ?? 1;
       const totalPrice = prices[i];
       const unitPrice = qty > 0 ? totalPrice / qty : totalPrice;
-      result.set(names[i].toLowerCase(), { quantity: qty, unitPrice, totalPrice });
+      result.set(names[i].toLowerCase(), {
+        quantity: qty,
+        unitPrice,
+        totalPrice,
+      });
     }
 
     // Fallback: text-based parsing if HTML parsing found nothing
@@ -134,11 +145,17 @@ async function fetchOrderDetailItems(
         const name = nameMatch[1].trim();
         if (name.length < 3) continue;
 
-        result.set(name.toLowerCase(), { quantity: qty, unitPrice: totalPrice / qty, totalPrice });
+        result.set(name.toLowerCase(), {
+          quantity: qty,
+          unitPrice: totalPrice / qty,
+          totalPrice,
+        });
       }
     }
 
-    log(`[matcha] Walmart MAIN: order detail enrichment found ${result.size} items`);
+    log(
+      `[matcha] Walmart MAIN: order detail enrichment found ${result.size} items`
+    );
   } catch (err) {
     warn('[matcha] Walmart MAIN: order detail fetch failed:', err);
   }
@@ -241,7 +258,9 @@ window.addEventListener('message', async (event) => {
 
     // Enrich items that have zero prices from print bill
     for (const receipt of allReceipts) {
-      const hasZeroPriceItems = receipt.items.some((i) => i.totalPrice === 0 && i.unitPrice === 0);
+      const hasZeroPriceItems = receipt.items.some(
+        (i) => i.totalPrice === 0 && i.unitPrice === 0
+      );
       if (!hasZeroPriceItems) continue;
 
       const billItems = await fetchOrderDetailItems(receipt.orderId);
@@ -258,9 +277,7 @@ window.addEventListener('message', async (event) => {
       }
     }
 
-    log(
-      `[matcha] Walmart MAIN: found ${allReceipts.length} total receipts`
-    );
+    log(`[matcha] Walmart MAIN: found ${allReceipts.length} total receipts`);
     window.postMessage(
       {
         type: 'MATCHA_WALMART_RESULT',

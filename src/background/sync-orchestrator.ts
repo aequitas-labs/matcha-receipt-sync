@@ -15,7 +15,8 @@ export class SyncOrchestrator {
 
   /** Mark a retailer as currently syncing (visible in popup) */
   async setSyncing(retailerId: string, syncing: boolean): Promise<void> {
-    const { syncingRetailers = [] } = await chrome.storage.local.get('syncingRetailers');
+    const { syncingRetailers = [] } =
+      await chrome.storage.local.get('syncingRetailers');
     const set = new Set<string>(syncingRetailers);
     if (syncing) set.add(retailerId);
     else set.delete(retailerId);
@@ -48,9 +49,10 @@ export class SyncOrchestrator {
 
     // Stamp receipts with the current schema version before persisting
     const schemaVersion = getCurrentSchemaVersion(retailerId);
-    const stamped = schemaVersion > 0
-      ? receipts.map((r) => ({ ...r, schemaVersion }))
-      : receipts;
+    const stamped =
+      schemaVersion > 0
+        ? receipts.map((r) => ({ ...r, schemaVersion }))
+        : receipts;
 
     // Persist locally before pushing to API
     await saveReceipts(stamped);
@@ -130,7 +132,9 @@ export class SyncOrchestrator {
       const currentVersion = getCurrentSchemaVersion(scraper.retailerId);
       if (currentVersion > 0) {
         const existing = await getReceiptsByRetailer(scraper.retailerId);
-        const hasStale = existing.some((r) => (r.schemaVersion ?? 0) < currentVersion);
+        const hasStale = existing.some(
+          (r) => (r.schemaVersion ?? 0) < currentVersion
+        );
         if (hasStale) {
           await this.cursorStore.clear(scraper.retailerId);
           log(
@@ -187,7 +191,9 @@ export class SyncOrchestrator {
   }
 
   /** Show a red '!' badge when any retailer has an error; clear it when all are clean. */
-  private async updateBadge(syncStatus: Record<string, RetailerSyncStatus>): Promise<void> {
+  private async updateBadge(
+    syncStatus: Record<string, RetailerSyncStatus>
+  ): Promise<void> {
     const hasError = Object.values(syncStatus).some((s) => !!s.lastError);
     if (hasError) {
       await chrome.action.setBadgeText({ text: '!' });
