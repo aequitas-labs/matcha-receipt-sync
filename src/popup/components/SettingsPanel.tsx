@@ -261,6 +261,22 @@ export function SettingsPanelView({
           )}
         </Card>
 
+        {/* Feedback / support */}
+        <Card>
+          <label className="block text-xs font-medium text-foreground mb-1">
+            Feedback &amp; support
+          </label>
+          <p className="text-[10px] text-muted-foreground mb-1.5">
+            Request features or report bugs
+          </p>
+          <button
+            onClick={() => chrome.tabs.create({ url: 'https://matchamoney.featurebase.app/' })}
+            className="text-xs text-primary hover:underline cursor-pointer"
+          >
+            matchamoney.featurebase.app →
+          </button>
+        </Card>
+
         {/* Debug log */}
         <DebugPanel />
       </div>

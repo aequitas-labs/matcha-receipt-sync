@@ -22,7 +22,7 @@ export function Header({
         <h1 className="font-sans text-base font-semibold text-foreground leading-tight">
           matcha money
         </h1>
-        <p className="text-[10px] text-muted-foreground leading-tight">
+        <p className="text-[10px] font-mono text-muted-foreground leading-tight">
           receipt sync
         </p>
       </div>

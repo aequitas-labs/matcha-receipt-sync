@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "webpack --watch --mode development",
     "build": "webpack --mode production",
+    "zip": "npm run build && cd dist && zip -r ../store/receipt-sync.zip . && echo 'Zipped to store/receipt-sync.zip'",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
