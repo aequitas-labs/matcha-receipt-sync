@@ -1,0 +1,107 @@
+// https://ecom-api.costco.com/ebusiness/order/v1/orders/graphql
+// {"query":"query receiptsWithCounts($startDate: String!, $endDate: String!,$documentType:String!,$documentSubType:String!) {\n    receiptsWithCounts(startDate: $startDate, endDate: $endDate,documentType:$documentType,documentSubType:$documentSubType) {\n    inWarehouse\n    gasStation\n    carWash\n    gasAndCarWash\n    receipts{\n    warehouseName receiptType  documentType transactionDateTime transactionBarcode warehouseName transactionType total \n    totalItemCount\n    itemArray {  \n      itemNumber\n    }\n    tenderArray {   \n      tenderTypeCode\n      tenderDescription\n      amountTender\n    }\n    couponArray {  \n      upcnumberCoupon\n    }  \n  }\n}\n  }","variables":{"startDate":"1/01/2026","endDate":"3/31/2026","text":"Last 3 Months","documentType":"all","documentSubType":"all"}}
+{
+  "data": {
+    "receiptsWithCounts": {
+      "inWarehouse": 1,
+      "gasStation": 0,
+      "carWash": 0,
+      "gasAndCarWash": 0,
+      "receipts": [
+        {
+          "warehouseName": "WHEATON",
+          "receiptType": "In-Warehouse",
+          "documentType": "WarehouseReceiptDetail",
+          "transactionDateTime": "2026-02-04T11:52:00",
+          "transactionBarcode": "21112400701222602041152",
+          "transactionType": "Sales",
+          "total": 252.74,
+          "totalItemCount": 22,
+          "itemArray": [
+            {
+              "itemNumber": "2227556"
+            },
+            {
+              "itemNumber": "2287780"
+            },
+            {
+              "itemNumber": "1001368"
+            },
+            {
+              "itemNumber": "384732"
+            },
+            {
+              "itemNumber": "585434"
+            },
+            {
+              "itemNumber": "251680"
+            },
+            {
+              "itemNumber": "4165769"
+            },
+            {
+              "itemNumber": "1593426"
+            },
+            {
+              "itemNumber": "1407686"
+            },
+            {
+              "itemNumber": "1199652"
+            },
+            {
+              "itemNumber": "132666"
+            },
+            {
+              "itemNumber": "1956023"
+            },
+            {
+              "itemNumber": "1364322"
+            },
+            {
+              "itemNumber": "5354"
+            },
+            {
+              "itemNumber": "373095"
+            },
+            {
+              "itemNumber": "22967"
+            },
+            {
+              "itemNumber": "1617507"
+            },
+            {
+              "itemNumber": "1935800"
+            },
+            {
+              "itemNumber": "6262016"
+            },
+            {
+              "itemNumber": "519638"
+            },
+            {
+              "itemNumber": "164950"
+            },
+            {
+              "itemNumber": "8370"
+            },
+            {
+              "itemNumber": "31801"
+            }
+          ],
+          "tenderArray": [
+            {
+              "tenderTypeCode": "061",
+              "tenderDescription": "VISA",
+              "amountTender": 252.74
+            }
+          ],
+          "couponArray": [
+            {
+              "upcnumberCoupon": "2100003730954"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

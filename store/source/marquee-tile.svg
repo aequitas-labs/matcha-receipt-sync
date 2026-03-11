@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="560" viewBox="0 0 1400 560">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap');
+    </style>
+    <linearGradient id="bg" x1="0" y1="0" x2="1400" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2F3E2E"/>
+      <stop offset="100%" stop-color="#1e2a1e"/>
+    </linearGradient>
+    <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#ffffff" opacity="0.05"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1400" height="560" fill="url(#bg)"/>
+  <rect width="1400" height="560" fill="url(#dots)"/>
+
+  <!-- Accent bar -->
+  <rect x="0" y="0" width="6" height="560" fill="#88B04B"/>
+
+  <!-- Left column: logo + copy -->
+
+  <!-- Logo -->
+  <rect x="64" y="64" width="56" height="56" rx="13" fill="#88B04B"/>
+  <g transform="translate(73, 73) scale(1.6)" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 20h10" />
+    <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+    <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
+    <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
+  </g>
+
+  <!-- App name -->
+  <text x="134" y="90"
+    font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="22" font-weight="700" fill="#F3F1E8" letter-spacing="-0.5">matcha money</text>
+  <text x="134" y="112"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="13" font-weight="400" fill="#88B04B" letter-spacing="0" opacity="0.85">receipt sync</text>
+
+  <!-- Divider -->
+  <line x1="64" y1="152" x2="660" y2="152" stroke="#ffffff" stroke-width="0.5" opacity="0.08"/>
+
+  <!-- Headline -->
+  <text x="64" y="238"
+    font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="56" font-weight="700" fill="#F3F1E8" letter-spacing="-1.5">Clarify your data.</text>
+  <text x="64" y="308"
+    font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="56" font-weight="700" fill="#88B04B" letter-spacing="-1.5">Develop your ritual.</text>
+
+  <!-- Subline -->
+  <text x="64" y="356"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="16" font-weight="400" fill="#F3F1E8" opacity="0.45" letter-spacing="0">Amazon · Costco · Walmart · Target</text>
+
+  <!-- Divider -->
+  <line x1="64" y1="390" x2="660" y2="390" stroke="#ffffff" stroke-width="0.5" opacity="0.08"/>
+
+  <!-- Pills -->
+  <rect x="64" y="410" width="172" height="34" rx="17" fill="#88B04B" opacity="0.15"/>
+  <text x="150" y="432"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="13" font-weight="600" fill="#88B04B" text-anchor="middle">CSV / JSON export</text>
+
+  <rect x="248" y="410" width="130" height="34" rx="17" fill="#88B04B" opacity="0.15"/>
+  <text x="313" y="432"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="13" font-weight="600" fill="#88B04B" text-anchor="middle">free to use</text>
+
+  <rect x="390" y="410" width="230" height="34" rx="17" fill="#88B04B" opacity="0.15"/>
+  <text x="505" y="432"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="13" font-weight="600" fill="#88B04B" text-anchor="middle">sync with matcha money</text>
+
+  <!-- Vertical divider -->
+  <line x1="740" y1="40" x2="740" y2="520" stroke="#ffffff" stroke-width="0.5" opacity="0.06"/>
+
+  <!-- Right column: feature callouts -->
+  <text x="800" y="138"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="11" font-weight="600" fill="#88B04B" letter-spacing="0.08em" opacity="0.7">WHAT YOU GET</text>
+
+  <!-- Feature 1 -->
+  <rect x="800" y="158" width="4" height="48" rx="2" fill="#88B04B" opacity="0.6"/>
+  <text x="820" y="180"
+    font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="20" font-weight="700" fill="#F3F1E8">Itemized receipts</text>
+  <text x="820" y="200"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="13" font-weight="400" fill="#F3F1E8" opacity="0.45">Every item, quantity, and price. Automatically.</text>
+
+  <!-- Feature 2 -->
+  <rect x="800" y="230" width="4" height="48" rx="2" fill="#88B04B" opacity="0.6"/>
+  <text x="820" y="252"
+    font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="20" font-weight="700" fill="#F3F1E8">Runs in the background</text>
+  <text x="820" y="272"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="13" font-weight="400" fill="#F3F1E8" opacity="0.45">Daily and weekly sync. No manual steps.</text>
+
+  <!-- Feature 3 -->
+  <rect x="800" y="302" width="4" height="48" rx="2" fill="#88B04B" opacity="0.6"/>
+  <text x="820" y="324"
+    font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="20" font-weight="700" fill="#F3F1E8">Export anywhere</text>
+  <text x="820" y="344"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="13" font-weight="400" fill="#F3F1E8" opacity="0.45">JSON for developers. CSV for spreadsheets.</text>
+
+  <!-- Feature 4 -->
+  <rect x="800" y="374" width="4" height="48" rx="2" fill="#88B04B" opacity="0.6"/>
+  <text x="820" y="396"
+    font-family="'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="20" font-weight="700" fill="#F3F1E8">Sync with matcha money</text>
+  <text x="820" y="416"
+    font-family="'JetBrains Mono', 'SF Mono', Menlo, monospace"
+    font-size="13" font-weight="400" fill="#F3F1E8" opacity="0.45">Connect to your budget. See exactly where you spend.</text>
+</svg>

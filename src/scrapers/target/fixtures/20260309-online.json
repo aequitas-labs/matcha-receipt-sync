@@ -1,0 +1,98 @@
+{
+  "id": "50263991019234597",
+  "type": "SHIPMENT",
+  "date": "2025-01-26T13:54:53.000Z",
+  "total_amount": 28.39,
+  "vcd_no": "750-254-441",
+  "discount": -7.1,
+  "status": "CLOSED",
+  "payments": [
+    {
+      "type": "VISA",
+      "sub_type": "NONE",
+      "sub_type_value": "Visa",
+      "display_card_number": "XXXX",
+      "total_charged": 28.39
+    }
+  ],
+  "lines": [
+    {
+      "id": "1",
+      "invoice_key": "8aedd3b4-9488-8678-0194-a2e4d4a24ac5",
+      "order_line_key": "202501260649232660023301300261",
+      "quantity": 1.0,
+      "shipped_quantity": 1.0,
+      "unit_price": 35.49,
+      "original_unit_price": 35.49,
+      "buy_unit_of_measure": "Each",
+      "discount": -7.1,
+      "charge": -7.1,
+      "fee": 0.0,
+      "amount": 35.49,
+      "effective_amount": 28.39,
+      "sub_total": 28.39,
+      "total_tax": 0.0,
+      "item": {
+        "tcin": "87850759",
+        "description": "HealthyBaby Certified Safe Organic Cotton Enhanced Diapers - Size 3 - 56ct"
+      },
+      "charges": [
+        {
+          "type": "PROMOTION",
+          "name": "226820348",
+          "value": -7.1,
+          "level": "OrderItem",
+          "promotion_details": {
+            "description": "Save 20% on one large pack of diapers",
+            "id": "226820348"
+          }
+        }
+      ],
+      "taxes": [],
+      "qualified_medical_expense": false,
+      "virtual_bundle_component": false
+    }
+  ],
+  "addresses": [
+    {
+      "address_id": "f7c42253-dbe3-11ef-91f5-52540094cab8",
+      "first_name": "Springfield Target",
+      "address_line1": "100 Main St",
+      "city": "Springfield",
+      "state": "IL",
+      "zip_code": "62701",
+      "country": "US",
+      "guest_email_id": "test@example.com",
+      "types": ["STORE"]
+    },
+    {
+      "address_id": "f7c42252-dbe3-11ef-91f5-52540094cab8",
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "address_line1": "123 Main St",
+      "city": "Springfield",
+      "state": "IL",
+      "zip_code": "62701",
+      "country": "US",
+      "phone_number": "(555) 555-5555",
+      "types": ["BILLING"],
+      "profile_address_id": "eff92c50-30f4-11eb-a82e-497131918b61"
+    }
+  ],
+  "fulfillment": {
+    "fulfillment_type": "StorePickup",
+    "fulfillment_method": "Store Pickup"
+  },
+  "receipts": [
+    {
+      "type": "gift_receipt",
+      "receipt_id": "5-5026-3991-0192-3459-7",
+      "barcode": "data:image/gif;base64,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"
+    },
+    {
+      "type": "self_receipt",
+      "receipt_id": "2-5026-3991-0192-3459-7",
+      "barcode": "data:image/gif;base64,R0lGODlhLAFQAPAAAAAAAP///ywAAAAALAFQAEAC/4yPmcAQjFqLkrp6sNFverhNShdiUsWBlOWU3cm2pta+KmfP7yKuWW1TnGSX3uiITP4gqhwQtgwun0YU82b0DUuwFDDEig6polmvBpVOdVkc6RfmsbPKet0aIzc/+6r/WoRGB+bEZdUnpCe2tcZlmNHomAcCKPf1RiiZB+Zm5zmCt6ZHplbqVXk2+MY4FkiVGLczFiOZJpja5EQZaAkLN5U4l/tJHNZ3emz6p8gHDEpk1uXnq8mHDI2NFlmqS7QT+5vJXUjSWUwcajhqoXzMXKnJo64O+CrvLMv4KGW7jdPKKZcbRPhEBRx2Dt2HTdvyuQN36Ns4QqxmeaGmxtoybP/7HvhrM6ucQDoE480TiTChp3TkOjpUVDAirksUoQC8eK9avY21aHwcWVGiSUxEB9p0pVIlS3052CGD2GzmkV3RDtnzodMVT34+O/4LCa+guIeWdk1MemehwYbWoD5sNrRm1bbh6tLY6Y5j0w0/vwBE2StnUZJHz6JNsjTNXhdPY0bFkpJqGYvTBN/Vmrfnmb5lJwsdVxJ0YXOHkSS+5nSZW15Sn528WRlrRrzruG72CjJo7kuhjQqjWdq02pMu6cZ7Cves5OXGiY7FpYuW7RucJ3nbjZEsw3rBP53eyli1Y1SQgTOnh7Tuc8jRI1WFhBvoaPnZYW5P3z3tFYbFuY//f8dLXKsctQVOsl3W3j7v8RWfX2AFKNZg4LyGX36IDdfSYi+tZkxY5pzXjTL1sReSgpPdtthXutFnmX1r+Wfhhfut1V+FjTmS3IfZ7Aijc4ORyBSB2cCX4m7CBHagixQaFiOOo9QWnnbtsFbeVDuiJ2KLQCompFfViWIWdi1OSE6PTQZTBH8aNndjEDmqAiJsoa13S4J7LehRg52FyWKSZK6Y0pluPildlC4i5yGcV4ZooF3QlXjnidTpad1BSDr653yBnvldZotIiSiEOlJYYGyObonadNpQCuZ1fWIaIaDACdoplBv+16GoipIqzZw/1glplyl+iSVgmSY5jKyC/1o5I3Fr9timTFW6ViZlvmqnkad43jJtq5Yeeypvms7KKYZBnjIlh29GtqicV4X7aarbEhuisbG+65tnpJXbbIZcQiuek7qyy6tVstEZ71bzslpsWEP1Rthvyz7T77l/pIvruua1a+27CBuqsKSrFinfkeB+fB+TTdZa6K3HqaaxlQWzKW4s2da2MMkOAnrpc5lKPHEvedlKM6iPcStztaVea9/N0uVsi5H6vurzvUAHDczQLRd96NERyiUyzSMCa7FkXjJcr8OiISvu1VgPqua/NgY86MAbzwzw2AlrKzKRUZc89c41w9vZQeSubK7cyUQLc6IEK92rx7/ujXPfDP/qvKergtf3c+CHx8gyWwAbTR7S1Fa0tOTY0va05XliXqm9D+MbsedvZ02o6HOTTqXpvqAe+cGTg8z3cn5fJrjJ97KNJp+bIl6x4qQw/pbjd0NusHrDvxSy8Zf/nXzgPUtote23w03js7t3XfrXA86Vt5ZkS6/ZpLB7K/vahKe8L/Rppi83jL2sfQKKU8eEtzrMVM57rwNf5r61vP29qEJYC12NBJiumJ1OSNkTB8qc5h7Xcct3DYPQ7JhXOJR8zkIWVB8GQyWRUWFPbPKjXOsYOEKx/EVtRkEh/1RBq8SlylAcwp3dkga8DvoogXYSVj/QtkMT6g9lE1QZ6IQIHpf/vdBrBeRY6hDYNNaFEIf0iuJneijBJfXvitEbohap1zv3GfCL2mNisKJxtvuV8IyE8WEV18hCLHqKiLgyYgx3NcP4+RCEJiIjFB/Ex2TRTpJuq6AgiTY69sWxi3ibm96It8AhfQ95D8wfGqmoRiDy63/OCiAcc3XIxyWRhosUYyNF2UBSxo6HfUxjtawYyDZmkWvqsh4SOUjL/TEyUo7UY9qkeMrt/VGV/vvVIN9IN2mRUAvIVKQybclMXObQJGYUk5/K57wV5qeFrsxm4464Qfh5soagvKE4ywhJc8JqdpUMGjvR9UpDtuZ33ZxnLRVozzw6cJfQ7CUqfwnIdV5y/2uZLCY8CSrPLB20iXgc1iN5djJppvJ5bGSlvwDqzupd9B6z9OYHwenErjiznFQjHz/Nd7t/XiygAovl9Vpq0G8idIz3/KimxgcxSuL0bTpdXEoB5NNjZrRRLx3qLRWqS/zxUpJ+HKk6u9PU6T0VlgNlaUE1KlSOSgqrZX1mJAf3UGWdL6yp4R1Zu2XWqZqqqmo1m0dnms+aJrVtS7WkMK9JzIwZM55hc+n2lhlTFC1Uqw3lqi/lmtOJ6m6LKo0qY5njWDuWTS9PBCxIIxjXcZ0Pfa1EqV0Fildu6pVpNoNpR0s72T3qs2o3Tedq6RqvIva0rb8AKlr5ese1/jW3bv/drU1F08+JAZeQA4QqccEG2qAid7T1Gxlzabq5MaFTc18NznSxaVcNYrSx2n2sbZWL26zqVrCTJKxv56rZC/K0bp5db3aP616rhpOtsQUvUuvbPPL+Nr8u3K825ejF4NUxjAKOrP2+G9jwnrO3CsbvYTG5Pov2N6/sBbBo6aeq47XVwCGVklcX/GGKhlixK5Vtiaka4L6SVqYYPu0JL6taD5uUu8Et5HBjW9yz4vjE8hIhPn08RZFClJoltSaIOWtdJGOXR+1lcveKatqjtlhJUyZpMIeMYupi2SEQ7qSJKazj7qq4wBk+cFfLXN7SnDex1WUzJxPZZTgn16/xXXH/ncfcuftmNsabdTAXlRNhJVo2K3FO8SgNDeVouhjPMEazG/mcwcX6l8tvrm2Fb8tj+TaXvnfGLFMZ3M7XHnmbSZ6t6gRNZKipmsWolbKrDevpYVaUxiO28X+XjGsU6xrTYu71pn/tT1i7VpN3pfWWsYRsU1d62XTOtEN9HeRFBxuxw+6zekl87L3meNA7luyuD+1sMkNbutLe6Vhha+333VjdXi4emHvc7B+nNrrL2nO5Q13jWu+btviALKrdzWzlCRzcBA8io/V771m3GdClbvh7CZ3qiIsP0eM1XKetLOM143vjxs22x08N35B3O+BRfna4X33xBmecv9fVd7oZJk5pdsv50jOXeM3lfXNgo7zRO3/wn1vO72Q3uZkAN7qmkV5xJRQAADs="
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+<!DOCTYPE html><html><head><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'JetBrains Mono',monospace; background:#2F3E2E; width:1280px; height:800px; overflow:hidden; }
+.scene { position:relative; width:1280px; height:800px; display:flex; align-items:center;
+  background:linear-gradient(135deg,#2F3E2E 0%,#1e2a1e 100%); }
+.dot-overlay { position:absolute; inset:0;
+  background-image:radial-gradient(circle,rgba(255,255,255,0.04) 1px,transparent 1px);
+  background-size:20px 20px; pointer-events:none; }
+.accent { position:absolute; left:0; top:0; bottom:0; width:4px; background:#88B04B; }
+.popup { width:360px; background:#F3F1E8; border-radius:16px;
+  box-shadow:0 32px 80px rgba(0,0,0,0.5); overflow:hidden; flex-shrink:0; }
+.popup-inner { padding:16px; }
+.popup-header { display:flex; align-items:center; gap:8px; margin-bottom:16px;
+  padding-bottom:12px; border-bottom:1px solid #E5E2D9; }
+.popup-header img { width:24px; height:24px; border-radius:6px; }
+.app-name { font-family:'Geist',sans-serif; font-size:15px; font-weight:600; color:#2F3E2E; line-height:1.2; }
+.app-sub { font-family:'JetBrains Mono',monospace; font-size:10px; color:#52525B; }
+.ml-auto { margin-left:auto; display:flex; gap:4px; }
+.icon-btn { width:28px; height:28px; border-radius:6px; border:none; background:transparent;
+  display:flex; align-items:center; justify-content:center; color:#52525B; }
+.status-bar { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+.dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.dot.green { background:#88B04B; }
+.status-text { font-size:11px; color:#52525B; }
+.status-text.connected { color:#88B04B; font-weight:500; }
+.section-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em;
+  color:#52525B; margin-bottom:8px; font-family:'Geist',sans-serif; }
+.card { background:#FFFFFF; border:1px solid #E5E2D9; border-radius:10px;
+  padding:10px 12px; margin-bottom:8px; }
+.retailer-row { display:flex; align-items:center; gap:8px; }
+.retailer-icon { font-size:15px; }
+.retailer-name { font-family:'Geist',sans-serif; font-size:13px; font-weight:600;
+  color:#2F3E2E; flex:1; }
+.badge { font-size:10px; padding:2px 7px; border-radius:20px; background:#F5F3EC; color:#52525B; }
+.sync-time { font-size:11px; margin-top:4px; }
+.sync-time.green { color:#88B04B; }
+.sync-time.muted { color:#52525B; }
+.progress-bar { height:4px; background:#F5F3EC; border-radius:2px; margin-top:6px; overflow:hidden; }
+.progress-fill { height:100%; background:#88B04B; border-radius:2px; }
+.sync-btn { width:100%; padding:9px; border-radius:8px; border:none; background:#88B04B;
+  color:white; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600;
+  margin-bottom:16px; margin-top:4px; }
+.sync-btn.dim { opacity:0.5; }
+.export-row { display:flex; align-items:center; gap:8px; }
+.export-count { font-size:11px; color:#52525B; flex:1; }
+.btn-sec { padding:5px 10px; border-radius:6px; border:1px solid #E5E2D9; background:#FFFFFF;
+  font-family:'JetBrains Mono',monospace; font-size:11px; color:#2F3E2E; display:flex; align-items:center; gap:4px; }
+.copy-panel { flex:1; display:flex; flex-direction:column; justify-content:center; padding:64px 72px; }
+.eyebrow { font-family:'JetBrains Mono',monospace; font-size:11px; color:#88B04B;
+  letter-spacing:0.1em; margin-bottom:14px; text-transform:uppercase; font-weight:600; }
+.headline { font-family:'Geist',sans-serif; font-size:46px; font-weight:700;
+  color:#F3F1E8; line-height:1.1; letter-spacing:-0.03em; margin-bottom:20px; }
+.headline .g { color:#88B04B; }
+.body-copy { font-family:'JetBrains Mono',monospace; font-size:13px; color:#F3F1E8;
+  opacity:0.6; line-height:1.65; margin-bottom:28px; max-width:440px; }
+.pills { display:flex; flex-wrap:wrap; gap:8px; }
+.pill { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600;
+  color:#88B04B; background:rgba(136,176,75,0.15); border-radius:20px; padding:5px 14px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.spin { animation:spin 1.2s linear infinite; display:inline-block; }
+</style></head><body>
+<div class="scene" style="padding:0 80px;flex-direction:row-reverse;">
+  <div class="accent"></div><div class="dot-overlay"></div>
+  <div style="width:430px;background:#1a1f1a;border-radius:16px;box-shadow:0 32px 80px rgba(0,0,0,0.6);overflow:hidden;flex-shrink:0;">
+  <div style="background:#252b25;padding:10px 14px;display:flex;align-items:center;gap:6px;">
+    <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57"></div>
+    <div style="width:10px;height:10px;border-radius:50%;background:#ffbd2e"></div>
+    <div style="width:10px;height:10px;border-radius:50%;background:#28c840"></div>
+    <div style="margin-left:12px;display:flex;gap:0;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;background:#1a1f1a;color:#e0c097;padding:3px 12px;border-radius:6px 6px 0 0;">matcha-receipts.json</div>
+    </div>
+  </div>
+  <div style="padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.75;color:#9ca3af;"><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">1</span><span style="color:rgba(255,255,255,0.4)">{</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">2</span>  <span style="color:#88B04B">"orderId"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#e0c097">"113-8472910-3847291"</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">3</span>  <span style="color:#88B04B">"retailer"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#e0c097">"amazon"</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">4</span>  <span style="color:#88B04B">"orderDate"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#e0c097">"2025-12-14"</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">5</span>  <span style="color:#88B04B">"totalAmount"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#93c5fd">84.97</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">6</span>  <span style="color:#88B04B">"items"</span><span style="color:rgba(255,255,255,0.4)">: [</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">7</span>    <span style="color:rgba(255,255,255,0.4)">{</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">8</span>      <span style="color:#88B04B">"name"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#e0c097">"Anker USB-C Cable 6ft 2-pack"</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">9</span>      <span style="color:#88B04B">"quantity"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#93c5fd">1</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">10</span>      <span style="color:#88B04B">"unitPrice"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#93c5fd">15.99</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">11</span>      <span style="color:#88B04B">"totalPrice"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#93c5fd">15.99</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">12</span>    <span style="color:rgba(255,255,255,0.4)">},</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">13</span>    <span style="color:rgba(255,255,255,0.4)">{</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">14</span>      <span style="color:#88B04B">"name"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#e0c097">"Kindle Paperwhite 16GB"</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">15</span>      <span style="color:#88B04B">"totalPrice"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#93c5fd">62.99</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">16</span>    <span style="color:rgba(255,255,255,0.4)">}</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">17</span>  <span style="color:rgba(255,255,255,0.4)">],</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">18</span>  <span style="color:#88B04B">"tax"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#93c5fd">5.99</span><span style="color:rgba(255,255,255,0.4)">,</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">19</span>  <span style="color:#88B04B">"paymentMethods"</span><span style="color:rgba(255,255,255,0.4)">: [{</span> <span style="color:#88B04B">"type"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#e0c097">"Visa"</span><span style="color:rgba(255,255,255,0.4)">,</span> <span style="color:#88B04B">"last4"</span><span style="color:rgba(255,255,255,0.4)">:</span> <span style="color:#e0c097">"4242"</span> <span style="color:rgba(255,255,255,0.4)">}]</span></div><div style="white-space:pre"><span style="color:rgba(255,255,255,0.15);display:inline-block;width:28px;text-align:right;margin-right:14px">20</span><span style="color:rgba(255,255,255,0.4)">}</span></div></div>
+</div><div class="copy-panel" style="padding-right:80px;padding-left:0;">
+  <div class="eyebrow">No Account Required</div>
+  <div class="headline">Your data,<br><span class="g">your format.</span></div>
+  <div class="body-copy">Export everything as JSON or CSV — no subscription needed. Import into your own tools and spreadsheets.</div>
+  <div class="pills"><div class="pill">always free</div><div class="pill">CSV for spreadsheets</div><div class="pill">JSON for developers</div></div>
+</div>
+</div></body></html>
