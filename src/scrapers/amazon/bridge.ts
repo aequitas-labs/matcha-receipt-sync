@@ -3,6 +3,7 @@ import { showToast } from '../../content/toast';
 import { formatShortDate } from '../../utils/date';
 import type { ScrapedReceipt } from '../../types/scraper';
 import type { SyncProgress } from '../../types/messages';
+import { log, warn } from '../../utils/log';
 
 /**
  * Amazon bridge script — ISOLATED world.
@@ -17,7 +18,7 @@ function waitForMainReady(): Promise<void> {
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       window.removeEventListener('message', handler);
-      console.warn('[matcha] Amazon: MAIN world ready signal timed out');
+      warn('[matcha] Amazon: MAIN world ready signal timed out');
       resolve();
     }, 8_000);
     function handler(event: MessageEvent) {
@@ -35,7 +36,7 @@ async function run(): Promise<void> {
   // Prevent duplicate syncs if already in progress
   const { syncProgress = {} } = await chrome.storage.local.get('syncProgress');
   if (syncProgress[RETAILER_ID]) {
-    console.log('[matcha] Amazon: sync already in progress, skipping');
+    log('[matcha] Amazon: sync already in progress, skipping');
     return;
   }
 
@@ -47,7 +48,7 @@ async function run(): Promise<void> {
   const years: number[] = [];
   for (let y = currentYear; y >= syncFromYear; y--) years.push(y);
 
-  console.log(`[matcha] Amazon: scanning years ${currentYear}–${syncFromYear}`);
+  log(`[matcha] Amazon: scanning years ${currentYear}–${syncFromYear}`);
   showToast('Scanning Amazon orders...', 'info');
 
   const requestId = crypto.randomUUID();

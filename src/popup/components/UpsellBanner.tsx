@@ -8,7 +8,11 @@ interface UpsellBannerViewProps {
   onLogin: () => void;
 }
 
-export function UpsellBannerView({ onDismiss, onSignup, onLogin }: UpsellBannerViewProps) {
+export function UpsellBannerView({
+  onDismiss,
+  onSignup,
+  onLogin,
+}: UpsellBannerViewProps) {
   return (
     <Card className="mb-3 bg-primary-bg border-primary/20 animate-fade-in">
       <div className="flex items-start justify-between">
@@ -23,8 +27,8 @@ export function UpsellBannerView({ onDismiss, onSignup, onLogin }: UpsellBannerV
         </button>
       </div>
       <p className="text-xs text-muted-foreground mt-1 mb-3">
-        Connect to matcha money to sync your receipts as transactions. Budget
-        smarter with real purchase data.
+        Know exactly where your money goes. matcha money builds your budget
+        automatically from real bank and purchase data.
       </p>
       <div className="flex gap-2">
         <Button variant="primary" size="sm" onClick={onSignup}>
@@ -64,8 +68,12 @@ export function UpsellBanner() {
   return (
     <UpsellBannerView
       onDismiss={handleDismiss}
-      onSignup={() => chrome.tabs.create({ url: 'https://matcha.money/signup' })}
-      onLogin={() => chrome.tabs.create({ url: 'https://matcha.money/login' })}
+      onSignup={() =>
+        chrome.tabs.create({ url: 'https://matcha.money/sign-up' })
+      }
+      onLogin={() =>
+        chrome.tabs.create({ url: 'https://matcha.money/sign-in' })
+      }
     />
   );
 }

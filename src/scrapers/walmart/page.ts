@@ -14,6 +14,7 @@ const WALMART_GRAPHQL_BASE =
   'https://www.walmart.com/orchestra/cph/graphql/PurchaseHistoryV3/1c1a8ff73cf03b3b5d23ae41db2d8f296f1baee3e92608116a70514f72ce3570';
 
 import { type WalmartOrder, parseOrders } from './parser';
+import { log, warn } from '../../utils/log';
 
 interface WalmartFetchRequest {
   type: 'MATCHA_WALMART_FETCH';
@@ -137,9 +138,9 @@ async function fetchOrderDetailItems(
       }
     }
 
-    console.log(`[matcha] Walmart MAIN: order detail enrichment found ${result.size} items`);
+    log(`[matcha] Walmart MAIN: order detail enrichment found ${result.size} items`);
   } catch (err) {
-    console.warn('[matcha] Walmart MAIN: order detail fetch failed:', err);
+    warn('[matcha] Walmart MAIN: order detail fetch failed:', err);
   }
   return result;
 }
@@ -182,12 +183,12 @@ window.addEventListener('message', async (event) => {
           if (!reachedCutoff) {
             nextCursor = ph.pageInfo?.nextPageCursor ?? null;
           }
-          console.log(
+          log(
             `[matcha] Walmart MAIN: ${receipts.length} orders from __NEXT_DATA__, nextCursor=${nextCursor}`
           );
         }
       } catch (e) {
-        console.warn('[matcha] Walmart MAIN: failed to parse __NEXT_DATA__', e);
+        warn('[matcha] Walmart MAIN: failed to parse __NEXT_DATA__', e);
       }
     }
 
@@ -197,7 +198,7 @@ window.addEventListener('message', async (event) => {
 
     while (nextCursor && pageCount < MAX_PAGES) {
       pageCount++;
-      console.log(
+      log(
         `[matcha] Walmart MAIN: fetching page ${pageCount + 1}, cursor=${nextCursor}`
       );
 
@@ -221,7 +222,7 @@ window.addEventListener('message', async (event) => {
       });
 
       if (!resp.ok) {
-        console.warn(`[matcha] Walmart MAIN: API ${resp.status}`);
+        warn(`[matcha] Walmart MAIN: API ${resp.status}`);
         break;
       }
 
@@ -257,7 +258,7 @@ window.addEventListener('message', async (event) => {
       }
     }
 
-    console.log(
+    log(
       `[matcha] Walmart MAIN: found ${allReceipts.length} total receipts`
     );
     window.postMessage(
@@ -283,4 +284,4 @@ window.addEventListener('message', async (event) => {
 
 // Signal ready
 window.postMessage({ type: 'MATCHA_WALMART_READY' }, '*');
-console.log('[matcha] Walmart MAIN world script loaded');
+log('[matcha] Walmart MAIN world script loaded');

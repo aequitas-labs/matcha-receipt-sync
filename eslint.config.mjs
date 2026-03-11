@@ -19,6 +19,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', 'webpack.config.js'],
+    ignores: ['dist/**', 'node_modules/**', 'webpack.config.js', 'src/**/*.stories.tsx'],
   }
 );

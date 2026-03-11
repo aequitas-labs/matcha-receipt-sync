@@ -6,12 +6,14 @@ interface HeaderProps {
   useFakeApi: boolean;
   onOpenInWindow: () => void;
   onToggleSettings: () => void;
+  isWindow?: boolean;
 }
 
 export function Header({
   useFakeApi,
   onOpenInWindow,
   onToggleSettings,
+  isWindow,
 }: HeaderProps) {
   return (
     <header className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
@@ -33,13 +35,15 @@ export function Header({
         >
           <Settings size={14} />
         </button>
-        <button
-          onClick={onOpenInWindow}
-          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-          title="Open in window"
-        >
-          <ExternalLink size={14} />
-        </button>
+        {!isWindow && (
+          <button
+            onClick={onOpenInWindow}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            title="Open in window"
+          >
+            <ExternalLink size={14} />
+          </button>
+        )}
       </div>
     </header>
   );

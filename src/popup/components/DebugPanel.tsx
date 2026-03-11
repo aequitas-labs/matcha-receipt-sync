@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import type { DebugLogEntry } from '../../types/messages';
 import { Button } from './ui/Button';
 import { ChevronDown } from './ui/Icons';

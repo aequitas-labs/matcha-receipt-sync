@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
-import { ChevronDown } from './ui/Icons';
+import { Check, ChevronDown } from './ui/Icons';
 import { DebugPanel } from './DebugPanel';
 import { RETAILERS } from '../constants';
 
@@ -17,14 +17,17 @@ export interface SettingsPanelViewProps {
   lastMatchaSync: string | null;
   connected: boolean | null;
   devMode: boolean;
+  analyticsEnabled: boolean;
   budgetStartMonth: string | null;
   enabledRetailers: Set<string>;
   onBack: () => void;
   onSyncFromDateChange: (value: string) => void;
   onIntervalChange: (value: number) => void;
   onDevModeToggle: (checked: boolean) => void;
+  onAnalyticsToggle: (enabled: boolean) => void;
   onRetailerToggle: (retailerId: string, enabled: boolean) => void;
   onClearData: () => void;
+  onResetOnboarding: () => void;
 }
 
 export function SettingsPanelView({
@@ -33,14 +36,17 @@ export function SettingsPanelView({
   lastMatchaSync,
   connected,
   devMode,
+  analyticsEnabled,
   budgetStartMonth,
   enabledRetailers,
   onBack,
   onSyncFromDateChange,
   onIntervalChange,
   onDevModeToggle,
+  onAnalyticsToggle,
   onRetailerToggle,
   onClearData,
+  onResetOnboarding,
 }: SettingsPanelViewProps) {
   const [confirmClear, setConfirmClear] = useState(false);
 
@@ -75,6 +81,11 @@ export function SettingsPanelView({
             onChange={(e) => onSyncFromDateChange(e.target.value)}
             className="w-full text-xs bg-muted border border-border rounded-md px-2 py-1.5 text-foreground"
           />
+          {syncFromDate && new Date(syncFromDate + 'T00:00:00') > new Date() && (
+            <p className="text-[10px] text-warning mt-1">
+              This date is in the future — no orders will be synced until then.
+            </p>
+          )}
           {budgetStartMonth && !syncFromDate && (
             <p className="text-[10px] text-muted-foreground mt-1">
               Using budget start month: {budgetStartMonth}
@@ -136,8 +147,8 @@ export function SettingsPanelView({
           {connected === false && !devMode ? (
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground">
-                Connect to matcha money to automatically sync receipts as
-                transactions.
+                Know exactly where your money goes. matcha money builds your
+                budget automatically from real bank and purchase data.
               </p>
               <div className="flex gap-2">
                 <Button
@@ -145,7 +156,7 @@ export function SettingsPanelView({
                   size="sm"
                   onClick={() =>
                     chrome.tabs.create({
-                      url: 'https://matcha.money/register',
+                      url: 'https://matcha.money/sign-up',
                     })
                   }
                 >
@@ -155,7 +166,7 @@ export function SettingsPanelView({
                   variant="secondary"
                   size="sm"
                   onClick={() =>
-                    chrome.tabs.create({ url: 'https://matcha.money/login' })
+                    chrome.tabs.create({ url: 'https://matcha.money/sign-in' })
                   }
                 >
                   Log In
@@ -163,12 +174,36 @@ export function SettingsPanelView({
               </div>
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">
-              {lastMatchaSync
-                ? `Last synced ${new Date(lastMatchaSync).toLocaleString()}`
-                : 'Never synced'}
-            </p>
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5 text-success">
+                <Check size={12} />
+                <span className="text-xs">Connected to matcha.money</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {lastMatchaSync
+                  ? `Last synced ${new Date(lastMatchaSync).toLocaleString()}`
+                  : 'Never synced'}
+              </p>
+            </div>
           )}
+        </Card>
+
+        {/* Analytics opt-out */}
+        <Card>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={analyticsEnabled}
+              onChange={(e) => onAnalyticsToggle(e.target.checked)}
+              className="rounded border-border accent-primary"
+            />
+            <span className="text-xs font-medium text-foreground">
+              Share usage analytics
+            </span>
+          </label>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Helps improve matcha money. Sync errors are always reported.
+          </p>
         </Card>
 
         {/* Dev mode */}
@@ -187,6 +222,11 @@ export function SettingsPanelView({
           <p className="text-[10px] text-muted-foreground mt-1">
             Log transactions locally instead of pushing to matcha money
           </p>
+          {devMode && (
+            <Button variant="secondary" size="sm" className="mt-2" onClick={onResetOnboarding}>
+              Reset onboarding
+            </Button>
+          )}
         </Card>
 
         {/* Clear data */}
@@ -232,26 +272,29 @@ interface SettingsPanelProps {
   useFakeApi: boolean;
   connected: boolean | null;
   onBack: () => void;
+  onResetOnboarding: () => void;
 }
 
 const ALL_RETAILER_IDS = RETAILERS.map((r) => r.id);
 
-export function SettingsPanel({ useFakeApi, connected, onBack }: SettingsPanelProps) {
+export function SettingsPanel({ useFakeApi, connected, onBack, onResetOnboarding }: SettingsPanelProps) {
   const [syncFromDate, setSyncFromDate] = useState('');
   const [syncInterval, setSyncInterval] = useState(24);
   const [lastMatchaSync, setLastMatchaSync] = useState<string | null>(null);
   const [devMode, setDevMode] = useState(useFakeApi);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [budgetStartMonth, setBudgetStartMonth] = useState<string | null>(null);
   const [enabledRetailers, setEnabledRetailers] = useState<Set<string>>(new Set(ALL_RETAILER_IDS));
 
   useEffect(() => {
     chrome.storage.local.get(
-      ['syncFromDate', 'lastSuccessfulMatchaSync', 'syncIntervalHours', 'useFakeApi', 'enabledRetailers'],
+      ['syncFromDate', 'lastSuccessfulMatchaSync', 'syncIntervalHours', 'useFakeApi', 'analyticsEnabled', 'enabledRetailers'],
       (result) => {
         if (result.syncFromDate) setSyncFromDate(result.syncFromDate);
         if (result.lastSuccessfulMatchaSync) setLastMatchaSync(result.lastSuccessfulMatchaSync);
         if (result.syncIntervalHours) setSyncInterval(result.syncIntervalHours);
         setDevMode(result.useFakeApi !== false);
+        setAnalyticsEnabled(result.analyticsEnabled !== false);
         if (result.enabledRetailers) {
           setEnabledRetailers(new Set(result.enabledRetailers));
         }
@@ -309,6 +352,11 @@ export function SettingsPanel({ useFakeApi, connected, onBack }: SettingsPanelPr
     });
   };
 
+  const handleAnalyticsToggle = (enabled: boolean) => {
+    setAnalyticsEnabled(enabled);
+    chrome.storage.local.set({ analyticsEnabled: enabled });
+  };
+
   const handleDevModeToggle = (checked: boolean) => {
     setDevMode(checked);
     chrome.storage.local.set({ useFakeApi: checked });
@@ -333,14 +381,17 @@ export function SettingsPanel({ useFakeApi, connected, onBack }: SettingsPanelPr
       lastMatchaSync={lastMatchaSync}
       connected={connected}
       devMode={devMode}
+      analyticsEnabled={analyticsEnabled}
       budgetStartMonth={budgetStartMonth}
       enabledRetailers={enabledRetailers}
       onBack={onBack}
       onSyncFromDateChange={handleSyncFromDateChange}
       onIntervalChange={handleIntervalChange}
+      onAnalyticsToggle={handleAnalyticsToggle}
       onDevModeToggle={handleDevModeToggle}
       onRetailerToggle={handleRetailerToggle}
       onClearData={handleClearData}
+      onResetOnboarding={onResetOnboarding}
     />
   );
 }

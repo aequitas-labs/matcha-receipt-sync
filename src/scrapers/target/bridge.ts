@@ -1,6 +1,7 @@
 import { MessageBridge } from '../../content/message-bridge';
 import { showToast } from '../../content/toast';
 import { formatShortDate } from '../../utils/date';
+import { log } from '../../utils/log';
 
 /**
  * Target ISOLATED world content script.
@@ -13,7 +14,7 @@ const RETAILER_ID = 'target';
 async function run(): Promise<void> {
   const { syncProgress = {} } = await chrome.storage.local.get('syncProgress');
   if (syncProgress[RETAILER_ID]) {
-    console.log('[matcha] Target: sync already in progress, skipping');
+    log('[matcha] Target: sync already in progress, skipping');
     return;
   }
   showToast('Scanning Target orders...', 'info');
@@ -77,7 +78,7 @@ async function run(): Promise<void> {
     }>;
   }>;
 
-  console.log(
+  log(
     `[matcha] Target: received ${receipts.length} receipts from MAIN world`
   );
 

@@ -12,6 +12,7 @@ import {
   parseTargetReceiptHtml,
   type TargetOrderLine,
 } from './parser';
+import { log, warn } from '../../utils/log';
 
 const TARGET_API_KEY = 'ff457966e64d5e877fdbad070f276d18ecec4a01';
 const ORDER_HISTORY_URL =
@@ -78,7 +79,7 @@ window.addEventListener('message', async (event) => {
     // Fetch in-store orders (page by page)
     await fetchOrders(headers, 'STORE', req.startDate, receipts);
 
-    console.log(
+    log(
       `[matcha] Target MAIN: found ${receipts.length} total receipts`
     );
     window.postMessage(
@@ -126,13 +127,13 @@ async function fetchOrders(
 
   while (page <= totalPages) {
     const url = `${ORDER_HISTORY_URL}?page_number=${page}&page_size=${pageSize}&order_purchase_type=${purchaseType}&pending_order=true&shipt_status=true`;
-    console.log(
+    log(
       `[matcha] Target MAIN: fetching ${purchaseType} orders page ${page}`
     );
 
     const resp = await fetch(url, { headers, credentials: 'include' });
     if (!resp.ok) {
-      console.warn(`[matcha] Target MAIN: order history API ${resp.status}`);
+      warn(`[matcha] Target MAIN: order history API ${resp.status}`);
       break;
     }
 
@@ -232,7 +233,7 @@ async function fetchStoreOrderDetails(
       { headers, credentials: 'include' }
     );
     if (!resp.ok) {
-      console.warn(
+      warn(
         `[matcha] Target MAIN: store detail for ${storeReceiptId} returned ${resp.status}`
       );
       return null;
@@ -283,7 +284,7 @@ async function fetchStoreOrderDetails(
       items,
     };
   } catch (err) {
-    console.warn(
+    warn(
       `[matcha] Target MAIN: store order details error for ${storeReceiptId}:`,
       err
     );
@@ -308,14 +309,14 @@ async function fetchStoreReceiptHtml(
       }),
     });
     if (!resp.ok) {
-      console.warn(
+      warn(
         `[matcha] Target MAIN: HTML receipt for ${storeReceiptId} returned ${resp.status}`
       );
       return null;
     }
     return await resp.text();
   } catch (err) {
-    console.warn(
+    warn(
       `[matcha] Target MAIN: HTML receipt error for ${storeReceiptId}:`,
       err
     );
@@ -350,7 +351,7 @@ async function fetchInvoiceDetails(
       credentials: 'include',
     });
     if (!listResp.ok) {
-      console.warn(
+      warn(
         `[matcha] Target MAIN: invoice list for ${orderId} returned ${listResp.status}`
       );
       return [];
@@ -384,7 +385,7 @@ async function fetchInvoiceDetails(
           }
         );
         if (!detailResp.ok) {
-          console.warn(
+          warn(
             `[matcha] Target MAIN: invoice detail ${inv.id} returned ${detailResp.status}`
           );
           continue;
@@ -407,7 +408,7 @@ async function fetchInvoiceDetails(
           items,
         });
       } catch (err) {
-        console.warn(
+        warn(
           `[matcha] Target MAIN: invoice detail error for ${inv.id}:`,
           err
         );
@@ -416,7 +417,7 @@ async function fetchInvoiceDetails(
 
     return results;
   } catch (err) {
-    console.warn(
+    warn(
       `[matcha] Target MAIN: invoice list error for ${orderId}:`,
       err
     );
@@ -426,4 +427,4 @@ async function fetchInvoiceDetails(
 
 // Signal ready
 window.postMessage({ type: 'MATCHA_TARGET_READY' }, '*');
-console.log('[matcha] Target MAIN world script loaded');
+log('[matcha] Target MAIN world script loaded');

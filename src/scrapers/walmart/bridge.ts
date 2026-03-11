@@ -1,6 +1,7 @@
 import { MessageBridge } from '../../content/message-bridge';
 import { showToast } from '../../content/toast';
 import { formatShortDate } from '../../utils/date';
+import { log, warn } from '../../utils/log';
 
 /**
  * Walmart ISOLATED world content script.
@@ -25,7 +26,7 @@ function waitForMainReady(): Promise<void> {
     const timeout = setTimeout(() => {
       // If we never hear READY after 5s, try anyway — maybe the message was sent before we listened
       window.removeEventListener('message', handler);
-      console.warn(
+      warn(
         '[matcha] Walmart: MAIN world READY not received, proceeding anyway'
       );
       resolve();
@@ -38,7 +39,7 @@ function waitForMainReady(): Promise<void> {
 async function run(): Promise<void> {
   const { syncProgress = {} } = await chrome.storage.local.get('syncProgress');
   if (syncProgress[RETAILER_ID]) {
-    console.log('[matcha] Walmart: sync already in progress, skipping');
+    log('[matcha] Walmart: sync already in progress, skipping');
     return;
   }
   await waitForMainReady();
@@ -99,7 +100,7 @@ async function run(): Promise<void> {
     rawData?: Record<string, unknown>;
   }>;
 
-  console.log(
+  log(
     `[matcha] Walmart: received ${receipts.length} receipts from MAIN world`
   );
 

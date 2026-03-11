@@ -2,6 +2,7 @@ import { extractCostcoTokens } from './auth';
 import { MessageBridge } from '../../content/message-bridge';
 import { showToast } from '../../content/toast';
 import { formatShortDate } from '../../utils/date';
+import { log, warn } from '../../utils/log';
 
 /**
  * Costco ISOLATED world content script.
@@ -57,7 +58,7 @@ function toMDY(iso: string): string {
 async function run(): Promise<void> {
   const { syncProgress = {} } = await chrome.storage.local.get('syncProgress');
   if (syncProgress[RETAILER_ID]) {
-    console.log('[matcha] Costco: sync already in progress, skipping');
+    log('[matcha] Costco: sync already in progress, skipping');
     return;
   }
   showToast('Scanning Costco orders...', 'info');
@@ -66,15 +67,15 @@ async function run(): Promise<void> {
   // If it reports hasToken=true we can skip the fallback poll entirely.
   const { ready, hasToken } = await waitForMainReady();
   if (!ready) {
-    console.log('[matcha] Costco: MAIN world script did not signal ready in time');
+    log('[matcha] Costco: MAIN world script did not signal ready in time');
   }
 
   if (!hasToken) {
     // page.ts timed out without a valid token — do a short fallback poll
-    console.log('[matcha] Costco: hasToken=false, polling for tokens as fallback');
+    log('[matcha] Costco: hasToken=false, polling for tokens as fallback');
     const tokens = await waitForTokens(TOKEN_WAIT_MS);
     if (!tokens) {
-      console.log('[matcha] Costco: no auth tokens found after polling');
+      log('[matcha] Costco: no auth tokens found after polling');
       bridge.sendScrapeError(
         RETAILER_ID,
         'No Costco auth tokens found. Please log in to costco.com first.'
@@ -84,7 +85,7 @@ async function run(): Promise<void> {
     }
   }
 
-  console.log(
+  log(
     '[matcha] Costco: tokens confirmed, requesting receipts via MAIN world'
   );
 
@@ -130,7 +131,7 @@ async function run(): Promise<void> {
   if (result.error) {
     // If the token was stale/expired, retry once after a short delay
     if (/session expired|token/i.test(result.error)) {
-      console.warn('[matcha] Costco: token error, retrying once in 3s...');
+      warn('[matcha] Costco: token error, retrying once in 3s...');
       await new Promise(r => setTimeout(r, 3_000));
       const retryId = crypto.randomUUID();
       const retry = await new Promise<{ receipts?: unknown[]; error?: string }>((resolve) => {
@@ -186,7 +187,7 @@ async function run(): Promise<void> {
     }>;
   }>;
 
-  console.log(
+  log(
     `[matcha] Costco: received ${receipts.length} receipts from MAIN world`
   );
 

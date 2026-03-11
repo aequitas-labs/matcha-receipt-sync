@@ -8,6 +8,7 @@ import { ExportPanel } from './ExportPanel';
 
 const SettingsPanel = lazy(() => import('./SettingsPanel').then((m) => ({ default: m.SettingsPanel })));
 const RetailerDetail = lazy(() => import('./RetailerDetail').then((m) => ({ default: m.RetailerDetail })));
+import { OnboardingView } from './OnboardingView';
 import type { SyncStatusMap, SyncProgress } from '../../types/messages';
 import { checkSession } from '../../auth/session';
 import { RETAILERS } from '../constants';
@@ -17,6 +18,8 @@ type View = 'main' | 'settings' | 'retailer-detail';
 const ALL_RETAILER_IDS = new Set(RETAILERS.map((r) => r.id));
 
 export function App() {
+  const isWindow = new URLSearchParams(window.location.search).get('mode') === 'window';
+  const [firstRun, setFirstRun] = useState<boolean | null>(null);
   const [connected, setConnected] = useState<boolean | null>(null);
   const [status, setStatus] = useState<SyncStatusMap>({});
   const [syncingAll, setSyncingAll] = useState(false);
@@ -39,8 +42,9 @@ export function App() {
   useEffect(() => {
     checkSession().then((s) => setConnected(s.connected));
 
-    chrome.storage.local.get(['useFakeApi', 'enabledRetailers', 'syncingRetailers', 'syncProgress'], (result) => {
+    chrome.storage.local.get(['useFakeApi', 'enabledRetailers', 'syncingRetailers', 'syncProgress', 'firstRun'], (result) => {
       setUseFakeApi(result.useFakeApi !== false);
+      setFirstRun(result.firstRun === true);
       if (result.enabledRetailers) {
         setEnabledRetailers(new Set(result.enabledRetailers));
       }
@@ -72,13 +76,11 @@ export function App() {
         );
       }
       if (changes.syncingRetailers) {
-        setSyncingRetailers((prev) => {
-          const fromStorage = new Set<string>(changes.syncingRetailers.newValue ?? []);
-          const merged = new Set(prev);
-          for (const id of merged) { if (!fromStorage.has(id)) merged.delete(id); }
-          for (const id of fromStorage) { merged.add(id); }
-          return merged;
-        });
+        const fromStorage = new Set<string>(changes.syncingRetailers.newValue ?? []);
+        setSyncingRetailers(fromStorage);
+        if (fromStorage.size === 0) {
+          setSyncingAll(false);
+        }
       }
       if (changes.syncProgress) {
         setSyncProgress(changes.syncProgress.newValue ?? {});
@@ -103,9 +105,8 @@ export function App() {
   const handleSyncAll = () => {
     if (anyActive) return;
     setSyncingAll(true);
-    chrome.runtime.sendMessage({ type: 'MANUAL_SYNC_REQUEST' }, () => {
-      setSyncingAll(false);
-    });
+    setSyncingRetailers(new Set(enabledRetailers));
+    chrome.runtime.sendMessage({ type: 'MANUAL_SYNC_REQUEST' });
   };
 
   const handleSyncRetailer = (retailerId: string) => {
@@ -116,7 +117,7 @@ export function App() {
 
   const handleOpenInWindow = () => {
     chrome.windows.create({
-      url: chrome.runtime.getURL('popup/index.html'),
+      url: chrome.runtime.getURL('popup/index.html') + '?mode=window',
       type: 'popup',
       width: 400,
       height: 600,
@@ -129,6 +130,27 @@ export function App() {
     setView('retailer-detail');
   };
 
+  const handleOnboardingComplete = (triggerSync: boolean) => {
+    setFirstRun(false);
+    // Refresh enabled retailers and sync status from storage
+    chrome.storage.local.get('enabledRetailers', (result) => {
+      if (result.enabledRetailers) {
+        setEnabledRetailers(new Set(result.enabledRetailers));
+      }
+    });
+    refreshStatus();
+    if (triggerSync) {
+      handleSyncAll();
+    }
+  };
+
+  // Don't render until we know if it's first run
+  if (firstRun === null) return <div className="h-[480px]" />;
+
+  if (firstRun) {
+    return <OnboardingView onComplete={handleOnboardingComplete} />;
+  }
+
   return (
     <div className="p-4 min-h-[200px]">
       <Header
@@ -137,6 +159,7 @@ export function App() {
         onToggleSettings={() =>
           setView((v) => (v === 'settings' ? 'main' : 'settings'))
         }
+        isWindow={isWindow}
       />
 
       {view === 'settings' ? (
@@ -145,6 +168,10 @@ export function App() {
             useFakeApi={useFakeApi}
             connected={connected}
             onBack={() => setView('main')}
+            onResetOnboarding={() => {
+              chrome.storage.local.set({ firstRun: true });
+              setFirstRun(true);
+            }}
           />
         </Suspense>
       ) : view === 'retailer-detail' && selectedRetailer ? (

@@ -6,6 +6,7 @@ import { createApiClient } from '../api/client';
 import { formatDate } from '../utils/date';
 import { saveReceipts, getReceiptsByRetailer } from '../storage/receipts';
 import { getCurrentSchemaVersion } from '../utils/schemaVersion';
+import { log } from '../utils/log';
 
 export class SyncOrchestrator {
   private cursorStore = new CursorStore();
@@ -13,7 +14,7 @@ export class SyncOrchestrator {
   constructor(private registry: ScraperRegistry) {}
 
   /** Mark a retailer as currently syncing (visible in popup) */
-  private async setSyncing(retailerId: string, syncing: boolean): Promise<void> {
+  async setSyncing(retailerId: string, syncing: boolean): Promise<void> {
     const { syncingRetailers = [] } = await chrome.storage.local.get('syncingRetailers');
     const set = new Set<string>(syncingRetailers);
     if (syncing) set.add(retailerId);
@@ -58,23 +59,33 @@ export class SyncOrchestrator {
     let pushed = 0;
     const errors: string[] = [];
 
-    try {
-      const result = await api.batchUpsertReceipts({
-        receipts: stamped.map((r) => ({
-          retailer: r.retailer,
-          orderId: r.orderId,
-          orderDate: formatDate(r.orderDate),
-          totalAmount: r.totalAmount,
-          tax: r.tax,
-          orderUrl: r.orderUrl,
-          paymentMethods: r.paymentMethods,
-          schemaVersion: r.schemaVersion,
-          items: r.items,
-        })),
-      });
-      pushed = result.created + result.updated;
-    } catch (err) {
-      errors.push(`Batch upsert failed: ${err}`);
+    const payload = {
+      receipts: stamped.map((r) => ({
+        retailer: r.retailer,
+        orderId: r.orderId,
+        orderDate: formatDate(r.orderDate),
+        totalAmount: r.totalAmount,
+        tax: r.tax,
+        orderUrl: r.orderUrl,
+        paymentMethods: r.paymentMethods,
+        schemaVersion: r.schemaVersion,
+        items: r.items,
+      })),
+    };
+
+    // Retry up to 2 times with 2s backoff on transient failures
+    for (let attempt = 0; attempt <= 2; attempt++) {
+      try {
+        const result = await api.batchUpsertReceipts(payload);
+        pushed = result.created + result.updated;
+        break;
+      } catch (err) {
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 2_000));
+        } else {
+          errors.push(`Batch upsert failed: ${err}`);
+        }
+      }
     }
 
     // Advance cursor to most recent order
@@ -113,7 +124,7 @@ export class SyncOrchestrator {
     for (const scraper of this.registry.getAll()) {
       if (!scraper.requiresApiAccess) continue;
 
-      console.log(`[matcha] syncApiScrapers: running ${scraper.retailerId}`);
+      log(`[matcha] syncApiScrapers: running ${scraper.retailerId}`);
 
       // Clear cursor if locally-cached receipts pre-date the current schema version
       const currentVersion = getCurrentSchemaVersion(scraper.retailerId);
@@ -122,7 +133,7 @@ export class SyncOrchestrator {
         const hasStale = existing.some((r) => (r.schemaVersion ?? 0) < currentVersion);
         if (hasStale) {
           await this.cursorStore.clear(scraper.retailerId);
-          console.log(
+          log(
             `[matcha] ${scraper.retailerId}: stale schema detected (< v${currentVersion}), cursor cleared for full re-sync`
           );
         }
@@ -139,7 +150,7 @@ export class SyncOrchestrator {
       }
       try {
         const receipts = await scraper.scrape({ fetch, cursor });
-        console.log(
+        log(
           `[matcha] ${scraper.retailerId}: scraped ${receipts.length} receipts`
         );
         await this.handleScrapedReceipts(scraper.retailerId, receipts);
@@ -172,13 +183,25 @@ export class SyncOrchestrator {
     existing.lastError = error;
     syncStatus[retailerId] = existing;
     await chrome.storage.local.set({ syncStatus });
+    await this.updateBadge(syncStatus);
+  }
+
+  /** Show a red '!' badge when any retailer has an error; clear it when all are clean. */
+  private async updateBadge(syncStatus: Record<string, RetailerSyncStatus>): Promise<void> {
+    const hasError = Object.values(syncStatus).some((s) => !!s.lastError);
+    if (hasError) {
+      await chrome.action.setBadgeText({ text: '!' });
+      await chrome.action.setBadgeBackgroundColor({ color: '#e57373' });
+    } else {
+      await chrome.action.setBadgeText({ text: '' });
+    }
   }
 
   async storeCostcoTokens(clientId: string, idToken: string): Promise<void> {
     await chrome.storage.local.set({
       costcoTokens: { clientId, idToken },
     });
-    console.log('[matcha] Stored Costco auth tokens');
+    log('[matcha] Stored Costco auth tokens');
   }
 
   async getStatus(): Promise<Record<string, RetailerSyncStatus>> {
@@ -210,6 +233,7 @@ export class SyncOrchestrator {
 
     syncStatus[retailerId] = existing;
     await chrome.storage.local.set({ syncStatus });
+    await this.updateBadge(syncStatus);
   }
 
   private defaultStatus(retailerId: string): RetailerSyncStatus {

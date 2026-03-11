@@ -7,11 +7,12 @@ import { capture } from '../analytics/posthog';
 import { tryIdentify } from '../analytics/identify';
 import { Events } from '../analytics/events';
 import type { ExtensionMessage } from '../types/messages';
+import { log, warn } from '../utils/log';
 
 const registry = new ScraperRegistry();
 const orchestrator = new SyncOrchestrator(registry);
 
-console.log('[matcha] Service worker started');
+log('[matcha] Service worker started');
 
 // Track sync start times for duration measurement
 const syncStartTimes = new Map<string, number>();
@@ -24,6 +25,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   const version = chrome.runtime.getManifest().version;
   if (details.reason === 'install') {
     capture(Events.EXTENSION_INSTALLED, { version });
+    chrome.storage.local.set({ firstRun: true });
   } else if (details.reason === 'update') {
     capture(Events.EXTENSION_UPDATED, {
       version,
@@ -50,13 +52,18 @@ async function getEnabledRetailers(): Promise<Set<string>> {
 
 async function triggerDomScrapers(): Promise<void> {
   const enabled = await getEnabledRetailers();
+  // Mark all enabled retailers as syncing upfront so the popup shows active state
+  // before tabs finish loading and SCRAPE_COMPLETE fires
+  for (const retailerId of enabled) {
+    await orchestrator.setSyncing(retailerId, true);
+  }
   for (const [retailerId, config] of Object.entries(RETAILER_TAB_CONFIG)) {
     if (!enabled.has(retailerId)) {
-      console.log(`[matcha] Skipping disabled retailer: ${retailerId}`);
+      log(`[matcha] Skipping disabled retailer: ${retailerId}`);
       continue;
     }
     try {
-      console.log(
+      log(
         `[matcha] Opening ${retailerId} order page in background tab`
       );
       const tab = await chrome.tabs.create({
@@ -68,7 +75,7 @@ async function triggerDomScrapers(): Promise<void> {
       }
       syncStartTimes.set(retailerId, Date.now());
     } catch (err) {
-      console.warn(`[matcha] Failed to trigger ${retailerId}:`, err);
+      warn(`[matcha] Failed to trigger ${retailerId}:`, err);
     }
   }
 }
@@ -85,10 +92,11 @@ alarmManager.initialize().catch(console.error);
 async function triggerSingleRetailer(retailerId: string): Promise<void> {
   const config = RETAILER_TAB_CONFIG[retailerId];
   if (!config) {
-    console.warn(`[matcha] Unknown retailer: ${retailerId}`);
+    warn(`[matcha] Unknown retailer: ${retailerId}`);
     return;
   }
-  console.log(`[matcha] Opening ${retailerId} order page in background tab`);
+  await orchestrator.setSyncing(retailerId, true);
+  log(`[matcha] Opening ${retailerId} order page in background tab`);
   const tab = await chrome.tabs.create({
     url: config.orderPageUrl,
     active: false,
@@ -102,7 +110,7 @@ async function triggerSingleRetailer(retailerId: string): Promise<void> {
 // Debug: log when auto-opened tabs finish loading (to catch redirects)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (autoOpenedTabs.has(tabId) && changeInfo.status === 'complete') {
-    console.log(`[matcha] Auto-opened tab ${tabId} loaded: ${tab.url}`);
+    log(`[matcha] Auto-opened tab ${tabId} loaded: ${tab.url}`);
   }
 });
 
@@ -111,7 +119,7 @@ function closeIfAutoOpened(sender: chrome.runtime.MessageSender): void {
   const tabId = sender.tab?.id;
   if (tabId && autoOpenedTabs.has(tabId)) {
     autoOpenedTabs.delete(tabId);
-    console.log(`[matcha] Closing auto-opened tab ${tabId}`);
+    log(`[matcha] Closing auto-opened tab ${tabId}`);
     chrome.tabs.remove(tabId).catch(() => {});
   }
 }
@@ -132,7 +140,7 @@ async function updateSyncProgress(
 
 chrome.runtime.onMessage.addListener(
   (message: ExtensionMessage, sender, sendResponse) => {
-    console.log(
+    log(
       `[matcha] SW received: ${message.type}`,
       'from tab:',
       sender.tab?.id,
@@ -181,6 +189,7 @@ chrome.runtime.onMessage.addListener(
         updateSyncProgress(message.retailerId, null);
         orchestrator
           .recordError(message.retailerId, message.error)
+          .then(() => orchestrator.setSyncing(message.retailerId, false))
           .catch(console.error);
         break;
       }

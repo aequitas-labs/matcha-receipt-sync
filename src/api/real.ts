@@ -8,6 +8,19 @@ import type {
 import { getSessionCookie, buildAuthHeaders } from '../auth/session';
 import { logRequest } from '../debug/logger';
 
+const FETCH_TIMEOUT_MS = 30_000;
+
+/** fetch with a 30s timeout — prevents service worker hangs on slow/unresponsive servers. */
+async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export class RealMatchaApiClient implements MatchaApiClient {
   private async getBaseUrl(): Promise<string> {
     const { apiBaseUrl = 'https://matcha.money' } =
@@ -33,7 +46,7 @@ export class RealMatchaApiClient implements MatchaApiClient {
     }
 
     const url = `${baseUrl}/api/v1/transactions`;
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       method: 'POST',
       headers: buildAuthHeaders(cookie),
       body: JSON.stringify(req),
@@ -80,7 +93,7 @@ export class RealMatchaApiClient implements MatchaApiClient {
     }
 
     const url = `${baseUrl}/api/v1/receipts/batch`;
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       method: 'POST',
       headers: buildAuthHeaders(cookie),
       body: JSON.stringify(req),

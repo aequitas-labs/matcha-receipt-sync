@@ -1,5 +1,14 @@
-const COOKIE_NAME = 'better-auth.session_token';
+import { log } from '../utils/log';
+
 const MATCHA_URL = 'https://matcha.money';
+const COOKIE_NAME = 'better-auth.session_token'; // used for building auth headers
+
+// Chrome auto-applies __Secure- prefix to cookies with Secure attribute over HTTPS
+const COOKIE_NAMES = [
+  '__Secure-better-auth.session_token',
+  'better-auth.session_token',
+  '__Host-better-auth.session_token',
+];
 
 export interface SessionStatus {
   connected: boolean;
@@ -8,22 +17,16 @@ export interface SessionStatus {
 
 /** Read the BetterAuth session cookie from matcha.money */
 export async function getSessionCookie(): Promise<string | null> {
-  try {
-    const cookie = await chrome.cookies.get({
-      url: MATCHA_URL,
-      name: COOKIE_NAME,
-    });
-    if (!cookie) return null;
-
-    // Check if cookie is expired
-    if (cookie.expirationDate && cookie.expirationDate < Date.now() / 1000) {
-      return null;
-    }
-
-    return cookie.value;
-  } catch {
-    return null;
+  for (const name of COOKIE_NAMES) {
+    try {
+      const cookie = await chrome.cookies.get({ url: MATCHA_URL, name });
+      if (!cookie) continue;
+      if (cookie.expirationDate && cookie.expirationDate < Date.now() / 1000) continue;
+      log(`[matcha] session cookie matched: ${name}`);
+      return cookie.value;
+    } catch { /* continue */ }
   }
+  return null;
 }
 
 /** Check if user is logged in to matcha.money */

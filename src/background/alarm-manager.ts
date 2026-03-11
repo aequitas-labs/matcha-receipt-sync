@@ -1,3 +1,5 @@
+import { log } from '../utils/log';
+
 const ALARM_NAME = 'matcha-receipt-sync';
 
 export class AlarmManager {
@@ -21,7 +23,7 @@ export class AlarmManager {
 
     chrome.alarms.onAlarm.addListener((alarm) => {
       if (alarm.name === ALARM_NAME) {
-        console.log('[matcha] Alarm fired - opening retailer tabs for sync');
+        log('[matcha] Alarm fired - opening retailer tabs for sync');
         this.onSync().catch(console.error);
       }
     });

@@ -6,6 +6,7 @@
 
 import { mapCostcoItems, mapCostcoOnlineItems } from './parser';
 import type { CostcoOnlineLineItem } from './parser';
+import { log, warn } from '../../utils/log';
 
 const GRAPHQL_URL =
   'https://ecom-api.costco.com/ebusiness/order/v1/orders/graphql';
@@ -143,11 +144,11 @@ function getFreshTokens(): { clientId: string; idToken: string } | null {
   try {
     const payload = JSON.parse(atob(idToken.split('.')[1]));
     const ttl = Math.round(payload.exp - Date.now() / 1000);
-    console.log(
+    log(
       `[matcha] Costco MAIN: using idToken (exp in ${ttl}s, policy: ${payload.acr})`
     );
     if (ttl < 0) {
-      console.warn('[matcha] Costco MAIN: token is expired!');
+      warn('[matcha] Costco MAIN: token is expired!');
       return null;
     }
   } catch {
@@ -215,7 +216,7 @@ window.addEventListener('message', async (event) => {
     const listData = await listResp.json();
     const summaries = listData.data?.receiptsWithCounts?.receipts ?? [];
 
-    console.log(
+    log(
       `[matcha] Costco MAIN: found ${summaries.length} store receipts`
     );
 
@@ -254,7 +255,7 @@ window.addEventListener('message', async (event) => {
           });
         }
       } catch (err) {
-        console.warn(`[matcha] Costco MAIN store detail error:`, err);
+        warn(`[matcha] Costco MAIN store detail error:`, err);
       }
     }
 
@@ -310,7 +311,7 @@ async function fetchOnlineOrders(
       }),
     });
     if (!listResp.ok) {
-      console.warn(
+      warn(
         `[matcha] Costco MAIN: online list page ${page} returned ${listResp.status}`
       );
       break;
@@ -326,7 +327,7 @@ async function fetchOnlineOrders(
       orderTotal: number;
     }> = pageData.bcOrders ?? [];
 
-    console.log(
+    log(
       `[matcha] Costco MAIN: online orders page ${page}, ${orders.length} orders`
     );
 
@@ -344,7 +345,7 @@ async function fetchOnlineOrders(
         }),
       });
       if (!detailResp.ok) {
-        console.warn(
+        warn(
           `[matcha] Costco MAIN: online detail batch returned ${detailResp.status}`
         );
       } else {
@@ -380,7 +381,7 @@ async function fetchOnlineOrders(
         }
       }
     } catch (err) {
-      console.warn('[matcha] Costco MAIN: online detail error:', err);
+      warn('[matcha] Costco MAIN: online detail error:', err);
     }
 
     page++;
@@ -398,7 +399,7 @@ async function signalReady() {
     await new Promise(r => setTimeout(r, 500));
   }
   window.postMessage({ type: 'MATCHA_COSTCO_READY', hasToken }, '*');
-  console.log(`[matcha] Costco MAIN world script ready (hasToken=${hasToken})`);
+  log(`[matcha] Costco MAIN world script ready (hasToken=${hasToken})`);
 }
 
 if (document.readyState === 'complete') {
@@ -406,4 +407,4 @@ if (document.readyState === 'complete') {
 } else {
   window.addEventListener('load', signalReady);
 }
-console.log('[matcha] Costco MAIN world script loaded');
+log('[matcha] Costco MAIN world script loaded');

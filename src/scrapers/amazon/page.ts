@@ -1,6 +1,7 @@
 import { parseDate } from '../../utils/date';
 import type { ScrapedReceipt } from '../../types/scraper';
 import { type InvoiceRef, parseInvoicePage } from './parser';
+import { log, warn } from '../../utils/log';
 
 /**
  * Amazon MAIN world script — runs in page context with full DOM + fetch access.
@@ -39,7 +40,7 @@ const INVOICE_LINK = 'a[href*="summary/print.html"]';
 function collectInvoiceUrlsFromDoc(doc: Document, cursorDate?: string): InvoiceRef[] {
   const orderGroups = doc.querySelectorAll(ORDER_GROUP);
   const invoices: InvoiceRef[] = [];
-  console.log(`[matcha] Amazon: found ${orderGroups.length} order groups in DOM`);
+  log(`[matcha] Amazon: found ${orderGroups.length} order groups in DOM`);
 
   for (const group of orderGroups) {
     try {
@@ -99,10 +100,10 @@ async function fetchPaginatedInvoiceUrls(
     let html: string;
     try {
       const resp = await fetch(baseUrl.toString());
-      if (!resp.ok) { console.warn(`[matcha] Amazon page ${page} failed: ${resp.status}`); break; }
+      if (!resp.ok) { warn(`[matcha] Amazon page ${page} failed: ${resp.status}`); break; }
       html = await resp.text();
     } catch (err) {
-      console.warn(`[matcha] Amazon page ${page} error:`, err);
+      warn(`[matcha] Amazon page ${page} error:`, err);
       break;
     }
 
@@ -126,7 +127,7 @@ async function fetchPaginatedInvoiceUrls(
       }
     }
 
-    console.log(`[matcha] Amazon: page ${page} — ${invoices.length} found, ${newCount} new`);
+    log(`[matcha] Amazon: page ${page} — ${invoices.length} found, ${newCount} new`);
     onProgress(allInvoices.length);
 
     if (allTooOld && invoices.length > 0) break; // past date range
@@ -149,10 +150,10 @@ async function fetchAndParseInvoices(
   async function fetchOne(ref: InvoiceRef): Promise<ScrapedReceipt | null> {
     try {
       const resp = await fetch(ref.invoiceUrl);
-      if (!resp.ok) { console.warn(`[matcha] Invoice fetch failed ${ref.orderId}: ${resp.status}`); return null; }
+      if (!resp.ok) { warn(`[matcha] Invoice fetch failed ${ref.orderId}: ${resp.status}`); return null; }
       return parseInvoicePage(await resp.text(), ref);
     } catch (err) {
-      console.warn(`[matcha] Invoice error ${ref.orderId}:`, err);
+      warn(`[matcha] Invoice error ${ref.orderId}:`, err);
       return null;
     }
   }
@@ -201,7 +202,7 @@ window.addEventListener('message', async (event) => {
     }
 
     postProgress({ phase: 'scanning', current: years.length, total: years.length, message: `Found ${allInvoices.length} orders` });
-    console.log(`[matcha] Amazon: ${allInvoices.length} total orders to fetch`);
+    log(`[matcha] Amazon: ${allInvoices.length} total orders to fetch`);
 
     // Fetch invoice detail pages
     const receipts = await fetchAndParseInvoices(allInvoices, (current, total) => {
@@ -216,4 +217,4 @@ window.addEventListener('message', async (event) => {
 });
 
 window.postMessage({ type: 'MATCHA_AMAZON_READY' }, '*');
-console.log('[matcha] Amazon page script loaded');
+log('[matcha] Amazon page script loaded');

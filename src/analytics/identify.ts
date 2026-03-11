@@ -1,5 +1,5 @@
 import { getSessionCookie, buildAuthHeaders } from '../auth/session';
-import { identify, resetIdentity, getPostHog } from './posthog';
+import { identify, resetIdentity } from './posthog';
 
 const STORAGE_KEY_IDENTIFIED = 'posthogIdentifiedUser';
 

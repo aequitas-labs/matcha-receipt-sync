@@ -1,6 +1,7 @@
 import type { ReceiptScraper, ScrapeContext } from '../types/scraper';
 import { MessageBridge } from './message-bridge';
 import { showToast } from './toast';
+import { log } from '../utils/log';
 
 /**
  * Shared content script runner for DOM-based scrapers.
@@ -18,7 +19,7 @@ export async function runContentScript(scraper: ReceiptScraper): Promise<void> {
     const context: ScrapeContext = { document, cursor };
     const receipts = await scraper.scrape(context);
 
-    console.log(
+    log(
       `[matcha] ${scraper.retailerName}: scraped ${receipts.length} receipts`,
       receipts
     );
@@ -30,10 +31,10 @@ export async function runContentScript(scraper: ReceiptScraper): Promise<void> {
         'success'
       );
     } else {
-      console.log(
+      log(
         `[matcha] ${scraper.retailerName}: no orders matched. Page URL: ${location.href}`
       );
-      console.log(
+      log(
         `[matcha] Page body snippet (first 500 chars):`,
         document.body?.innerText?.slice(0, 500)
       );

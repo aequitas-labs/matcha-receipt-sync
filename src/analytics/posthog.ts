@@ -60,12 +60,18 @@ export async function getPostHog(): Promise<PostHog> {
   return initPromise;
 }
 
-/** Capture an event. Fire-and-forget — never throws. */
+/** Capture an event. Fire-and-forget — never throws.
+ *  Respects the analyticsEnabled setting; error events are always sent. */
 export async function capture(
   event: EventName,
   properties?: Record<string, unknown>
 ): Promise<void> {
   try {
+    // Error events are always sent regardless of opt-out (legitimate interest)
+    if (event !== 'sync_error') {
+      const { analyticsEnabled } = await chrome.storage.local.get('analyticsEnabled');
+      if (analyticsEnabled === false) return;
+    }
     const ph = await getPostHog();
     ph.capture(event, properties);
   } catch (err) {

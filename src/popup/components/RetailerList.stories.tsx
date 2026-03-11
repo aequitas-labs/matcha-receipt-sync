@@ -7,6 +7,7 @@ const meta: Meta<typeof RetailerList> = {
   component: RetailerList,
   args: {
     syncingRetailers: new Set(),
+    syncProgress: {},
     enabledRetailers: new Set(['amazon', 'costco', 'walmart', 'target']),
     onSyncRetailer: () => {},
     onRetailerClick: () => {},
