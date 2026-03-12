@@ -97,6 +97,34 @@ describe('computeEffectivePrices (proportional, no taxable[])', () => {
     const result = computeEffectivePrices(items, 7.03);
     expect(sumPaid(result)).toBe(7.03);
   });
+
+  it('undefined quantity: effectivePrice equals line-level share (treated as qty 1)', () => {
+    // Amazon-style: only totalPrice known, no quantity
+    const items: ScrapedItem[] = [
+      { name: 'Echo Dot', totalPrice: 49.99 },
+      { name: 'USB Cable', totalPrice: 12.99 },
+    ];
+    const result = computeEffectivePrices(items, 68.84); // includes tax/shipping
+    // Each item's effectivePrice = totalAmount × (totalPrice / subtotal)
+    const subtotal = 49.99 + 12.99;
+    expect(result[0].effectivePrice).toBeCloseTo(68.84 * (49.99 / subtotal), 2);
+    expect(result[1].effectivePrice).toBeCloseTo(68.84 * (12.99 / subtotal), 2);
+    expect(sumPaid(result)).toBe(68.84);
+  });
+
+  it('mixed: some items have quantity, some undefined', () => {
+    // Costco-style: most items have qty, but some (like discounts) might not
+    const items: ScrapedItem[] = [
+      { name: 'Milk', quantity: 2, totalPrice: 9.98 },
+      { name: 'Promo Item', totalPrice: 5.0 },
+    ];
+    const result = computeEffectivePrices(items, 16.0);
+    // Milk: (16 × 9.98/14.98) / 2 = 5.33
+    expect(result[0].effectivePrice).toBeCloseTo((16 * (9.98 / 14.98)) / 2, 2);
+    // Promo: (16 × 5.0/14.98) / 1 = 5.34
+    expect(result[1].effectivePrice).toBeCloseTo(16 * (5.0 / 14.98), 2);
+    expect(sumPaid(result)).toBe(16.0);
+  });
 });
 
 // ─── Taxable[] provided (Costco-style) ───────────────────────────────────────
