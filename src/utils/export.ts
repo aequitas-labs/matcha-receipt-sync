@@ -43,8 +43,8 @@ export function exportAsCSV(receipts: ScrapedReceipt[]): string {
             : String(r.orderDate),
           String(r.totalAmount),
           item.name,
-          String(item.quantity),
-          String(item.unitPrice),
+          item.quantity != null ? String(item.quantity) : '',
+          item.unitPrice != null ? String(item.unitPrice) : '',
           String(item.totalPrice),
         ]);
       }

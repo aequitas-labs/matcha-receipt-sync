@@ -22,8 +22,9 @@ import type { ScrapedItem } from '../types/scraper';
  *   - totalAmount is what was actually paid (after rewards/coupons at receipt level)
  *   - Item-level discounts are already reflected in totalPrice before this is called
  *   - If subtotal is 0 (all items are $0), effectivePrice is set to 0
+ *   - When quantity is undefined, division treats it as 1 (effectivePrice = line-level cost)
  *   - Results are rounded to 2 decimal places (cents); any remainder is assigned
- *     to the last item so sum(effectivePrice × quantity) === totalAmount exactly
+ *     to the last item so sum(effectivePrice × (quantity ?? 1)) === totalAmount exactly
  */
 export function computeEffectivePrices(
   items: ScrapedItem[],
@@ -73,14 +74,14 @@ export function computeEffectivePrices(
 
   // Assign any rounding remainder to the last item so totals reconcile exactly
   const paid = result.reduce(
-    (s, i) => round2(s + round2(i.effectivePrice! * i.quantity)),
+    (s, i) => round2(s + round2(i.effectivePrice! * (i.quantity ?? 1))),
     0
   );
   const remainder = round2(round2(totalAmount) - paid);
   if (remainder !== 0) {
     const last = result[result.length - 1];
     last.effectivePrice = round2(
-      last.effectivePrice! + remainder / last.quantity
+      last.effectivePrice! + remainder / (last.quantity ?? 1)
     );
   }
 

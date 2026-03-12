@@ -26,9 +26,9 @@ describe('parseInvoiceItemsHtml', () => {
     const items = parseInvoiceItemsHtml(html);
     expect(items).toHaveLength(1);
     expect(items[0].name).toBe('Echo Dot (4th Gen)');
-    expect(items[0].unitPrice).toBe(49.99);
     expect(items[0].totalPrice).toBe(49.99);
-    expect(items[0].quantity).toBe(1);
+    expect(items[0].unitPrice).toBeUndefined();
+    expect(items[0].quantity).toBeUndefined();
   });
 
   it('extracts multiple items', () => {
@@ -82,7 +82,7 @@ describe('parseInvoiceItemsHtml', () => {
       <span class="a-offscreen">$1,299.99</span>
     `;
     const items = parseInvoiceItemsHtml(html);
-    expect(items[0].unitPrice).toBe(1299.99);
+    expect(items[0].unitPrice).toBeUndefined();
   });
 });
 
@@ -100,7 +100,7 @@ describe('parseInvoiceItemsText', () => {
     const text = `Delivered. Widget ABCSold by: Seller $14.99`;
     const items = parseInvoiceItemsText(text);
     expect(items[0].totalPrice).toBe(14.99);
-    expect(items[0].unitPrice).toBe(14.99);
+    expect(items[0].unitPrice).toBeUndefined();
   });
 
   it('uses first price as unitPrice and last as totalPrice when two prices present', () => {
@@ -121,10 +121,10 @@ describe('parseInvoiceItemsText', () => {
     expect(items).toHaveLength(1);
   });
 
-  it('sets quantity to 1', () => {
+  it('leaves quantity undefined when not parsed', () => {
     const text = `Delivered. My ProductSold by: Seller $9.99`;
     const items = parseInvoiceItemsText(text);
-    expect(items[0].quantity).toBe(1);
+    expect(items[0].quantity).toBeUndefined();
   });
 });
 

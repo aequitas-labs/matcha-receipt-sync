@@ -19,8 +19,8 @@ export interface CostcoOnlineLineItem {
 
 export interface CostcoMappedItem {
   name: string;
-  quantity: number;
-  unitPrice: number;
+  quantity?: number;
+  unitPrice?: number;
   totalPrice: number;
 }
 
@@ -48,13 +48,15 @@ export function mapCostcoItems(
       // Negative line = discount on previous item
       const prev = mapped[mapped.length - 1];
       prev.totalPrice += item.amount; // amount is negative
-      prev.unitPrice = prev.totalPrice / prev.quantity;
+      if (prev.quantity) {
+        prev.unitPrice = prev.totalPrice / prev.quantity;
+      }
       // taxFlag for the previous item is unchanged (discount inherits it)
     } else {
       mapped.push({
         name: item.itemDescription01,
-        quantity: item.unit || 1,
-        unitPrice: item.itemUnitPriceAmount || item.amount,
+        quantity: item.unit || undefined,
+        unitPrice: item.itemUnitPriceAmount || undefined,
         totalPrice: item.amount,
       });
       taxFlags.push(item.taxFlag);
@@ -83,8 +85,8 @@ export function mapCostcoOnlineItems(
     .filter((i) => !i.isFeeItem)
     .map((i) => ({
       name: i.itemDescription,
-      quantity: i.quantity || 1,
-      unitPrice: i.price,
+      quantity: i.quantity || undefined,
+      unitPrice: i.price || undefined,
       totalPrice: i.merchandiseTotalAmount,
     }));
 

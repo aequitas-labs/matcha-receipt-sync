@@ -47,17 +47,18 @@ export function mapTargetInvoiceLines(lines: TargetOrderLine[]): {
   tax: number;
 } {
   const items: ScrapedItem[] = lines.map((line) => {
-    const qty = line.quantity || 1;
+    const qty = line.quantity || undefined;
     const subTotal =
       parseFloat(String(line.effective_amount || line.sub_total)) || 0;
     const lineTax = parseFloat(String(line.total_tax)) || 0;
     const unitPrice =
-      qty > 0
+      qty && qty > 0
         ? Math.round((subTotal / qty) * 100) / 100
-        : parseFloat(String(line.unit_price)) || 0;
+        : parseFloat(String(line.unit_price)) || undefined;
     // Effective price is exact per-item: post-discount amount + item's own tax
-    const effectivePrice =
-      Math.round(((subTotal + lineTax) / qty) * 10000) / 10000;
+    const effectivePrice = qty
+      ? Math.round(((subTotal + lineTax) / qty) * 10000) / 10000
+      : undefined;
     return {
       name: decodeHtmlEntities(
         line.item?.description || line.description || ''
@@ -88,13 +89,16 @@ export function mapTargetStoreLines(
   options?: { taxable?: boolean[] }
 ): ScrapedItem[] {
   const items: ScrapedItem[] = orderLines.map((line) => {
-    const qty = line.quantity || 1;
-    const unitPrice = parseFloat(line.item.unit_price) || 0;
+    const qty = line.quantity || undefined;
+    const unitPrice = parseFloat(line.item.unit_price) || undefined;
     return {
       name: decodeHtmlEntities(line.item.description),
       quantity: qty,
       unitPrice,
-      totalPrice: Math.round(unitPrice * qty * 100) / 100,
+      totalPrice:
+        unitPrice != null && qty != null
+          ? Math.round(unitPrice * qty * 100) / 100
+          : unitPrice ?? 0,
     };
   });
   return computeEffectivePrices(items, totals.total, {

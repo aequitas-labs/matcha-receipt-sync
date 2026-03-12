@@ -233,7 +233,7 @@ describe('parseOrders', () => {
     expect(reachedCutoff).toBe(false);
   });
 
-  it('defaults quantity to 1 when missing', () => {
+  it('leaves quantity undefined when missing', () => {
     const orders: WalmartOrder[] = [
       {
         displayId: 'WM-QTY',
@@ -242,7 +242,7 @@ describe('parseOrders', () => {
       },
     ];
     const { receipts } = parseOrders(orders, CUTOFF);
-    expect(receipts[0].items[0].quantity).toBe(1);
+    expect(receipts[0].items[0].quantity).toBeUndefined();
   });
 });
 

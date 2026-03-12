@@ -155,7 +155,7 @@ function OrderCard({
                     <span className="text-foreground line-clamp-1">
                       {item.name}
                     </span>
-                    {item.quantity > 1 && (
+                    {item.quantity != null && item.quantity > 1 && item.unitPrice != null && (
                       <span className="text-muted-foreground ml-1">
                         x{item.quantity} @ ${item.unitPrice.toFixed(2)}
                       </span>

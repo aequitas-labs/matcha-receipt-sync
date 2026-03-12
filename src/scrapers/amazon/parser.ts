@@ -30,7 +30,7 @@ export function parseInvoiceItemsHtml(html: string): ScrapedItem[] {
     if (!priceMatch) continue;
     seen.add(name);
     const price = parseCurrency('$' + priceMatch[1]);
-    items.push({ name, quantity: 1, unitPrice: price, totalPrice: price });
+    items.push({ name, totalPrice: price });
   }
   return items;
 }
@@ -59,8 +59,8 @@ export function parseInvoiceItemsText(text: string): ScrapedItem[] {
     if (!name || name.length < 3 || seen.has(name)) continue;
     seen.add(name);
     const totalPrice = prices[prices.length - 1];
-    const unitPrice = prices.length >= 2 ? prices[0] : totalPrice;
-    items.push({ name, quantity: 1, unitPrice, totalPrice });
+    const unitPrice = prices.length >= 2 ? prices[0] : undefined;
+    items.push({ name, unitPrice, totalPrice });
   }
   return items;
 }

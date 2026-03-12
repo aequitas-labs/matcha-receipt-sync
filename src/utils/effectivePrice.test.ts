@@ -14,7 +14,7 @@ function item(
 function sumPaid(items: ScrapedItem[]): number {
   return (
     Math.round(
-      items.reduce((s, i) => s + i.effectivePrice! * i.quantity, 0) * 100
+      items.reduce((s, i) => s + i.effectivePrice! * (i.quantity ?? 1), 0) * 100
     ) / 100
   );
 }

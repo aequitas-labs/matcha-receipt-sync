@@ -13,7 +13,7 @@
 const WALMART_GRAPHQL_BASE =
   'https://www.walmart.com/orchestra/cph/graphql/PurchaseHistoryV3/1c1a8ff73cf03b3b5d23ae41db2d8f296f1baee3e92608116a70514f72ce3570';
 
-import { type WalmartOrder, parseOrders } from './parser';
+import { type WalmartOrder, type WalmartReceipt, parseOrders } from './parser';
 import { log, warn } from '../../utils/log';
 
 interface WalmartFetchRequest {
@@ -76,11 +76,11 @@ function getWalmartHeaders(): Record<string, string> {
 async function fetchOrderDetailItems(
   orderId: string
 ): Promise<
-  Map<string, { quantity: number; unitPrice: number; totalPrice: number }>
+  Map<string, { quantity?: number; unitPrice?: number; totalPrice: number }>
 > {
   const result = new Map<
     string,
-    { quantity: number; unitPrice: number; totalPrice: number }
+    { quantity?: number; unitPrice?: number; totalPrice: number }
   >();
   try {
     const cleanId = orderId.replace(/-/g, '');
@@ -117,9 +117,9 @@ async function fetchOrderDetailItems(
     // Match names with prices (they appear in order)
     const count = Math.min(names.length, prices.length);
     for (let i = 0; i < count; i++) {
-      const qty = quantities[i] ?? 1;
+      const qty = quantities[i] || undefined;
       const totalPrice = prices[i];
-      const unitPrice = qty > 0 ? totalPrice / qty : totalPrice;
+      const unitPrice = qty && qty > 0 ? totalPrice / qty : undefined;
       result.set(names[i].toLowerCase(), {
         quantity: qty,
         unitPrice,
@@ -132,7 +132,7 @@ async function fetchOrderDetailItems(
       const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
       const chunks = text.split(/Qty\s+(\d+)/i);
       for (let i = 1; i < chunks.length; i += 2) {
-        const qty = parseInt(chunks[i], 10) || 1;
+        const qty = parseInt(chunks[i], 10) || undefined;
         const after = chunks[i + 1] || '';
         const priceMatch = after.match(/\$([\d,]+\.\d{2})/);
         if (!priceMatch) continue;
@@ -147,7 +147,7 @@ async function fetchOrderDetailItems(
 
         result.set(name.toLowerCase(), {
           quantity: qty,
-          unitPrice: totalPrice / qty,
+          unitPrice: qty && qty > 0 ? totalPrice / qty : undefined,
           totalPrice,
         });
       }
@@ -169,19 +169,7 @@ window.addEventListener('message', async (event) => {
   const req = event.data as WalmartFetchRequest;
 
   try {
-    const allReceipts: Array<{
-      orderId: string;
-      orderDate: string;
-      total: number;
-      tax?: number;
-      items: Array<{
-        name: string;
-        quantity: number;
-        unitPrice: number;
-        totalPrice: number;
-      }>;
-      rawData?: Record<string, unknown>;
-    }> = [];
+    const allReceipts: WalmartReceipt[] = [];
 
     const cutoff = new Date(req.startDate);
 
@@ -258,16 +246,16 @@ window.addEventListener('message', async (event) => {
 
     // Enrich items that have zero prices from print bill
     for (const receipt of allReceipts) {
-      const hasZeroPriceItems = receipt.items.some(
-        (i) => i.totalPrice === 0 && i.unitPrice === 0
+      const hasUnpricedItems = receipt.items.some(
+        (i) => !i.totalPrice && !i.unitPrice
       );
-      if (!hasZeroPriceItems) continue;
+      if (!hasUnpricedItems) continue;
 
       const billItems = await fetchOrderDetailItems(receipt.orderId);
       if (billItems.size === 0) continue;
 
       for (const item of receipt.items) {
-        if (item.totalPrice !== 0 || item.unitPrice !== 0) continue;
+        if (item.totalPrice || item.unitPrice) continue;
         const billItem = billItems.get(item.name.toLowerCase());
         if (billItem) {
           item.quantity = billItem.quantity;

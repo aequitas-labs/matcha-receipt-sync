@@ -79,6 +79,6 @@ export class TargetScraper implements ReceiptScraper {
     if (!name || !priceText) return null;
 
     const price = parseCurrency(priceText);
-    return { name, quantity: 1, unitPrice: price, totalPrice: price };
+    return { name, totalPrice: price };
   }
 }

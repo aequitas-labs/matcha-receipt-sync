@@ -142,10 +142,10 @@ describe('mapTargetInvoiceLines', () => {
     expect(tax).toBe(0);
   });
 
-  it('defaults quantity to 1 when missing', () => {
+  it('leaves quantity undefined when missing', () => {
     const lines = [makeLine({ quantity: 0 })];
     const { items } = mapTargetInvoiceLines(lines);
-    expect(items[0].quantity).toBe(1);
+    expect(items[0].quantity).toBeUndefined();
   });
 
   it('handles empty lines array', () => {
@@ -223,15 +223,15 @@ describe('mapTargetStoreLines', () => {
     expect(items[0].name).toBe('Up&Up');
   });
 
-  it('defaults quantity to 1 when 0', () => {
+  it('leaves quantity undefined when 0', () => {
     const items = mapTargetStoreLines(
       [makeLine({ quantity: 0 })],
       defaultTotals
     );
-    expect(items[0].quantity).toBe(1);
+    expect(items[0].quantity).toBeUndefined();
   });
 
-  it('returns 0 for unparseable unit_price', () => {
+  it('leaves unitPrice undefined for unparseable unit_price', () => {
     const items = mapTargetStoreLines(
       [
         makeLine({
@@ -240,7 +240,7 @@ describe('mapTargetStoreLines', () => {
       ],
       { total: 0, tax: 0 }
     );
-    expect(items[0].unitPrice).toBe(0);
+    expect(items[0].unitPrice).toBeUndefined();
   });
 
   it('handles empty array', () => {
@@ -377,7 +377,7 @@ describe(`mapTargetStoreLines — fixture ${FIXTURE_STORE_JSON_20260309.file}`, 
   });
 
   it('effectivePrice × quantity sums to grand total', () => {
-    const sum = items.reduce((s, i) => s + i.effectivePrice! * i.quantity, 0);
+    const sum = items.reduce((s, i) => s + i.effectivePrice! * (i.quantity ?? 1), 0);
     expect(sum).toBeCloseTo(expected.total, 1);
   });
 

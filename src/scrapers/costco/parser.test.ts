@@ -81,7 +81,7 @@ describe('mapCostcoItems', () => {
     expect(items[0].totalPrice).toBe(-5.0);
   });
 
-  it('uses amount as unitPrice when itemUnitPriceAmount is 0', () => {
+  it('leaves unitPrice undefined when itemUnitPriceAmount is 0', () => {
     const raw = [
       {
         itemDescription01: 'PAPER TOWELS',
@@ -91,10 +91,10 @@ describe('mapCostcoItems', () => {
       },
     ];
     const items = mapCostcoItems(raw, mkTotals(raw));
-    expect(items[0].unitPrice).toBe(18.99);
+    expect(items[0].unitPrice).toBeUndefined();
   });
 
-  it('defaults quantity to 1 when unit is 0', () => {
+  it('leaves quantity undefined when unit is 0', () => {
     const raw = [
       {
         itemDescription01: 'ITEM',
@@ -104,7 +104,7 @@ describe('mapCostcoItems', () => {
       },
     ];
     const items = mapCostcoItems(raw, mkTotals(raw));
-    expect(items[0].quantity).toBe(1);
+    expect(items[0].quantity).toBeUndefined();
   });
 
   it('handles empty item array', () => {
@@ -305,7 +305,7 @@ describe(`mapCostcoItems — fixture ${FIXTURE_STORE_DETAIL_20260309.file}`, () 
   });
 
   it('effectivePrice * quantity sums to receipt total', () => {
-    const sum = items.reduce((s, i) => s + i.effectivePrice! * i.quantity, 0);
+    const sum = items.reduce((s, i) => s + i.effectivePrice! * (i.quantity ?? 1), 0);
     expect(sum).toBeCloseTo(expected.total, 1);
   });
 
