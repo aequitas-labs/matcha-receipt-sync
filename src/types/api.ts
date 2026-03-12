@@ -1,17 +1,14 @@
+import type { LineItem, PaymentMethod } from '@matchamoney/api';
+
+// Extension-only types (not shared with server)
+
 export interface TransactionMetadata {
   retailer: string;
   orderId: string;
   orderUrl?: string;
   tax?: number;
-  paymentMethods?: { type: string; last4?: string }[];
-  items?: {
-    name: string;
-    quantity: number;
-    unitPrice: number;
-    totalPrice: number;
-    /** Per-unit cost including proportional share of tax and shipping */
-    effectivePrice?: number;
-  }[];
+  paymentMethods?: PaymentMethod[];
+  items?: LineItem[];
 }
 
 export interface CreateTransactionRequest {
@@ -35,31 +32,4 @@ export interface CreateTransactionResponse {
   notes: string | null;
   account_id: string;
   created_at: string;
-}
-
-export interface BatchUpsertReceiptsRequest {
-  receipts: Array<{
-    retailer: string;
-    orderId: string;
-    orderDate: string;
-    totalAmount: number;
-    tax?: number;
-    orderUrl?: string;
-    paymentMethods?: { type: string; last4?: string }[];
-    /** Schema version of the scraped data. Backend uses this to re-upsert when a higher version arrives. */
-    schemaVersion?: number;
-    items: Array<{
-      name: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-      /** Per-unit cost including proportional share of tax and shipping */
-      effectivePrice?: number;
-    }>;
-  }>;
-}
-
-export interface BatchUpsertReceiptsResponse {
-  created: number;
-  updated: number;
 }

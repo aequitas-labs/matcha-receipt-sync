@@ -46,6 +46,7 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "@matchamoney/api": "workspace:*",
     "posthog-js": "^1.360.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

@@ -1,3 +1,4 @@
+import type { LineItem } from '@matchamoney/api';
 import { computeEffectivePrices } from '../../utils/effectivePrice';
 
 export interface WalmartItem {
@@ -31,12 +32,7 @@ export interface WalmartReceipt {
   orderDate: string;
   total: number;
   tax?: number;
-  items: Array<{
-    name: string;
-    quantity: number;
-    unitPrice: number;
-    totalPrice: number;
-  }>;
+  items: LineItem[];
   rawData?: Record<string, unknown>;
 }
 
@@ -68,11 +64,11 @@ export function parseOrders(
     for (const group of order.groups ?? []) {
       for (const item of group.items ?? []) {
         if (!item.name) continue;
-        const qty = item.quantity ?? 1;
+        const qty = item.quantity || undefined;
         const lineTotal =
           item.linePrice ?? item.totalPrice ?? item.itemPrice ?? 0;
         const unit =
-          item.unitPrice ?? item.price ?? (qty > 0 ? lineTotal / qty : 0);
+          item.unitPrice ?? item.price ?? (qty && qty > 0 ? lineTotal / qty : undefined);
         items.push({
           name: item.name,
           quantity: qty,

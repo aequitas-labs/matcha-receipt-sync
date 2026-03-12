@@ -1,3 +1,4 @@
+import type { LineItem } from '@matchamoney/api';
 import { MessageBridge } from '../../content/message-bridge';
 import { showToast } from '../../content/toast';
 import { formatShortDate } from '../../utils/date';
@@ -70,12 +71,7 @@ async function run(): Promise<void> {
     total: number;
     tax?: number;
     storeName?: string;
-    items: Array<{
-      name: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-    }>;
+    items: LineItem[];
   }>;
 
   log(`[matcha] Target: received ${receipts.length} receipts from MAIN world`);

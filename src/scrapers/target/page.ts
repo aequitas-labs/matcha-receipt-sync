@@ -4,6 +4,7 @@
  * world content script via window.postMessage.
  */
 
+import type { LineItem } from '@matchamoney/api';
 import {
   decodeHtmlEntities,
   mapTargetInvoiceLines,
@@ -36,6 +37,19 @@ interface TargetOrder {
   store_receipt_id?: string;
 }
 
+interface TargetReceiptResult {
+  orderId: string;
+  orderUrlId?: string;
+  invoiceId?: string;
+  storeReceiptId?: string;
+  purchaseType?: string;
+  orderDate: string;
+  total: number;
+  tax?: number;
+  storeName?: string;
+  items: LineItem[];
+}
+
 interface TargetFetchRequest {
   type: 'MATCHA_TARGET_FETCH';
   requestId: string;
@@ -56,23 +70,7 @@ window.addEventListener('message', async (event) => {
   };
 
   try {
-    const receipts: Array<{
-      orderId: string;
-      orderUrlId?: string;
-      invoiceId?: string;
-      storeReceiptId?: string;
-      purchaseType?: string;
-      orderDate: string;
-      total: number;
-      tax?: number;
-      storeName?: string;
-      items: Array<{
-        name: string;
-        quantity: number;
-        unitPrice: number;
-        totalPrice: number;
-      }>;
-    }> = [];
+    const receipts: TargetReceiptResult[] = [];
 
     // Fetch online orders (page by page)
     await fetchOrders(headers, 'ONLINE', req.startDate, receipts);
@@ -101,23 +99,7 @@ async function fetchOrders(
   headers: Record<string, string>,
   purchaseType: 'ONLINE' | 'STORE',
   startDate: string,
-  receipts: Array<{
-    orderId: string;
-    orderUrlId?: string;
-    invoiceId?: string;
-    storeReceiptId?: string;
-    purchaseType?: string;
-    orderDate: string;
-    total: number;
-    tax?: number;
-    storeName?: string;
-    items: Array<{
-      name: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-    }>;
-  }>
+  receipts: TargetReceiptResult[]
 ): Promise<void> {
   let page = 1;
   const pageSize = 10;
@@ -177,10 +159,9 @@ async function fetchOrders(
       }
 
       // Fall back to order_lines (no prices available from list API)
-      const items = (order.order_lines || []).map((line) => ({
+      const items: LineItem[] = (order.order_lines || []).map((line) => ({
         name: decodeHtmlEntities(line.item.description),
-        quantity: line.original_quantity || 1,
-        unitPrice: 0,
+        quantity: line.original_quantity || undefined,
         totalPrice: 0,
       }));
 
@@ -208,21 +189,7 @@ async function fetchStoreOrderDetails(
   headers: Record<string, string>,
   storeReceiptId: string,
   orderDate: string
-): Promise<{
-  orderId: string;
-  storeReceiptId: string;
-  purchaseType: string;
-  orderDate: string;
-  total: number;
-  tax?: number;
-  storeName?: string;
-  items: Array<{
-    name: string;
-    quantity: number;
-    unitPrice: number;
-    totalPrice: number;
-  }>;
-} | null> {
+): Promise<TargetReceiptResult | null> {
   try {
     const resp = await fetch(
       `${STORE_ORDER_DETAILS_URL}/${storeReceiptId}/store_order_details?subscription=false`,
@@ -324,22 +291,7 @@ async function fetchInvoiceDetails(
   headers: Record<string, string>,
   orderId: string,
   orderDate: string
-): Promise<
-  Array<{
-    orderId: string;
-    orderUrlId: string;
-    invoiceId?: string;
-    orderDate: string;
-    total: number;
-    tax?: number;
-    items: Array<{
-      name: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-    }>;
-  }>
-> {
+): Promise<TargetReceiptResult[]> {
   try {
     // Get invoice list for this order
     const listResp = await fetch(`${INVOICES_URL}/${orderId}/invoices`, {
@@ -356,20 +308,7 @@ async function fetchInvoiceDetails(
     const invoiceList: Array<{ id: string; amount: number; date: string }> =
       listData.invoices || [];
 
-    const results: Array<{
-      orderId: string;
-      orderUrlId: string;
-      invoiceId?: string;
-      orderDate: string;
-      total: number;
-      tax?: number;
-      items: Array<{
-        name: string;
-        quantity: number;
-        unitPrice: number;
-        totalPrice: number;
-      }>;
-    }> = [];
+    const results: TargetReceiptResult[] = [];
 
     for (const inv of invoiceList) {
       try {

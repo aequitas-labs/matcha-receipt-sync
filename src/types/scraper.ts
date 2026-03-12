@@ -1,3 +1,10 @@
+import type { LineItem, PaymentMethod } from '@matchamoney/api';
+
+export type { LineItem, PaymentMethod };
+
+/** @deprecated Use LineItem instead */
+export type ScrapedItem = LineItem;
+
 export interface ReceiptScraper {
   readonly retailerId: string;
   readonly retailerName: string;
@@ -16,13 +23,6 @@ export interface ScrapeContext {
   cursor?: SyncCursor;
 }
 
-export interface PaymentMethod {
-  /** Human-readable card/wallet type (e.g. "Visa", "Mastercard", "PayPal") */
-  type: string;
-  /** Last 4 digits of the card, if available */
-  last4?: string;
-}
-
 export interface ScrapedReceipt {
   retailer: string;
   orderId: string;
@@ -35,19 +35,10 @@ export interface ScrapedReceipt {
   orderUrl?: string;
   /** Payment method(s) used for this order */
   paymentMethods?: PaymentMethod[];
-  items: ScrapedItem[];
+  items: LineItem[];
   rawData?: unknown;
   /** Schema version stamped at scrape time. Used to detect stale receipts when scraping logic improves. */
   schemaVersion?: number;
-}
-
-export interface ScrapedItem {
-  name: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  /** Effective per-unit cost including this item's share of tax and shipping */
-  effectivePrice?: number;
 }
 
 export interface SyncCursor {

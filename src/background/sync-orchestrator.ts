@@ -2,7 +2,7 @@ import type { ScraperRegistry } from '../scrapers/registry';
 import type { ScrapedReceipt, SyncResult } from '../types/scraper';
 import type { RetailerSyncStatus } from '../types/messages';
 import { CursorStore } from './cursor-store';
-import { createApiClient } from '../api/client';
+import { createApiClient } from '../api/factory';
 import { formatDate } from '../utils/date';
 import { saveReceipts, getReceiptsByRetailer } from '../storage/receipts';
 import { getCurrentSchemaVersion } from '../utils/schemaVersion';
@@ -64,13 +64,13 @@ export class SyncOrchestrator {
     const payload = {
       receipts: stamped.map((r) => ({
         retailer: r.retailer,
+        merchantId: r.retailer,
         orderId: r.orderId,
         orderDate: formatDate(r.orderDate),
         totalAmount: r.totalAmount,
         tax: r.tax,
         orderUrl: r.orderUrl,
         paymentMethods: r.paymentMethods,
-        schemaVersion: r.schemaVersion,
         items: r.items,
       })),
     };
